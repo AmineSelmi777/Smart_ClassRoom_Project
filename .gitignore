@@ -1,0 +1,24 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local Python environments
+.venv/
+venv/
+env/
+
+# Local secrets and credentials
+.env
+.env.*
+!.env.example
+**/firebase-key.json
+**/*service-account*.json
+
+# Local logs and operating-system files
+*.log
+.DS_Store
+Thumbs.db

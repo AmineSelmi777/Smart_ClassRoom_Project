@@ -1,0 +1,48 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDG3bC_nYrYJ-nwP6HmuMWbFBbaTHGxREA",
+  authDomain: "smartclassroomai-ae608.firebaseapp.com",
+  databaseURL: "https://smartclassroomai-ae608-default-rtdb.firebaseio.com",
+  projectId: "smartclassroomai-ae608",
+  storageBucket: "smartclassroomai-ae608.firebasestorage.app",
+  messagingSenderId: "119272527894",
+  appId: "1:119272527894:web:0571919e1679c68550fd37",
+  measurementId: "G-CZB9FH0D1H"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+
+
+model = joblib.load(model_path)
+model = joblib.load("ridge_model.PKL")
+
+
+cred = credentials.Certificate("firebase-key.json")
+
+===== Performance du mod�le =====
+R� Score : 0.9905264485438772
+MAE : 0.319395572804736
+MSE : 0.15324499126141677
+RMSE : 0.3914651852482118
+
+
+Remarques concernant les modifications qu'ils faut les appliqués prochainement :
+dans le code arduino'collection des données' il faut supprimer le ligne "rfid.PICC_HaltA();"
+Wifi 1 :
+Infinix HOT 60i 5G
+123456789
+http://10.139.62.109:5000/data
+Wifi 2 :
+ORANGE_C950
+7438Xnjh
+ 192.168.1.130

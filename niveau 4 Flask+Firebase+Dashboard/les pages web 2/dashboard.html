@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Classroom — Dashboard</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --primary: #1e6f5c;
+  --primary-dark: #165a4a;
+  --primary-light: #2c8a74;
+  --primary-soft: #e6f4f0;
+  --secondary: #3b82f6;
+  --secondary-soft: #eef2ff;
+  --accent: #8b5cf6;
+  --dark: #1e293b;
+  --dark-soft: #334155;
+  --gray: #64748b;
+  --gray-light: #94a3b8;
+  --gray-bg: #f0f4f8;
+  --white: #ffffff;
+  --surface: #ffffff;
+  --surface-alt: #f8fafc;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --success: #10b981;
+  --success-soft: #ecfdf5;
+  --warning: #f59e0b;
+  --warning-soft: #fffbeb;
+  --danger: #ef4444;
+  --danger-soft: #fef2f2;
+  --info: #3b82f6;
+  --info-soft: #eff6ff;
+  --gradient-primary: linear-gradient(135deg, #1e6f5c 0%, #3b82f6 100%);
+  --gradient-dark: linear-gradient(135deg, #1a3a32 0%, #1e5a4a 50%, #3b82f6 100%);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.03), 0 2px 4px rgba(0,0,0,0.03);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.03);
+  --shadow-lg: 0 12px 28px rgba(0,0,0,0.07), 0 4px 8px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 40px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.05);
+  --radius: 20px;
+  --radius-sm: 12px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+  --primary: #3b8b76;
+  --primary-dark: #2c7a66;
+  --primary-light: #4a9e88;
+  --primary-soft: #1a3a35;
+  --secondary: #60a5fa;
+  --secondary-soft: #1e2a3a;
+  --dark: #f1f5f9;
+  --dark-soft: #e2e8f0;
+  --gray: #94a3b8;
+  --gray-light: #64748b;
+  --gray-bg: #0f172a;
+  --white: #1e293b;
+  --surface: #1e293b;
+  --surface-alt: #162036;
+  --border: #334155;
+  --text: #f1f5f9;
+  --text-muted: #94a3b8;
+  --success-soft: #052e16;
+  --warning-soft: #291a00;
+  --danger-soft: #2d0a0a;
+  --info-soft: #11223b;
+  --gradient-dark: linear-gradient(135deg, #0a1a16 0%, #0d2a24 50%, #1e3a5f 100%);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.25);
+  --shadow-lg: 0 12px 28px rgba(0,0,0,0.35);
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--gray-bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px }
+::-webkit-scrollbar-track { background: transparent }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 100px }
+
+/* Header */
+.app-header {
+  background: var(--gradient-dark);
+  color: white;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-md);
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  color: white;
+}
+
+.header-icon {
+  width: 42px;
+  height: 42px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.header-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.header-sub {
+  font-size: 10px;
+  opacity: 0.6;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition);
+}
+
+.header-btn:hover {
+  background: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
+}
+
+.header-btn.logout {
+  background: rgba(239,68,68,0.15);
+  border-color: rgba(239,68,68,0.25);
+}
+
+.header-btn.logout:hover {
+  background: rgba(239,68,68,0.3);
+}
+
+/* Top Bar */
+.top-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.online-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--success);
+  border-radius: 50%;
+  margin-right: 8px;
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 0 2px rgba(16,185,129,0.3);
+}
+
+@keyframes pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.9); }
+}
+
+/* Status Bar */
+.status-bar {
+  background: var(--warning-soft);
+  color: var(--warning);
+  padding: 12px 24px;
+  display: none;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 2px solid var(--warning);
+  text-align: center;
+  margin: 0;
+}
+
+.status-bar.visible {
+  display: block;
+}
+
+/* Main Content */
+.main-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-primary);
+  transform: scaleX(0);
+  transition: transform 0.3s;
+}
+
+.stat-card:hover::before {
+  transform: scaleX(1);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.stat-card:hover .stat-icon {
+  transform: scale(1.05);
+}
+
+.icon-temp { background: var(--success-soft); color: var(--success); }
+.icon-future { background: var(--warning-soft); color: var(--warning); }
+.icon-hum { background: var(--info-soft); color: var(--info); }
+.icon-pir { background: var(--primary-soft); color: var(--primary); }
+
+[data-theme="dark"] .icon-temp,
+[data-theme="dark"] .icon-future,
+[data-theme="dark"] .icon-hum,
+[data-theme="dark"] .icon-pir {
+  background: rgba(255,255,255,0.08);
+}
+
+.stat-info { flex: 1; }
+.stat-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+.stat-value { font-size: 32px; font-weight: 800; color: var(--text); line-height: 1.1; letter-spacing: -1px; }
+.stat-unit { font-size: 14px; font-weight: 500; color: var(--gray-light); margin-left: 4px; }
+.stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 6px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+
+/* Presence Card */
+.presence-card {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  margin-bottom: 32px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  box-shadow: var(--shadow-md);
+}
+
+.presence-counter {
+  font-size: 56px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+.presence-label {
+  font-size: 13px;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+.presence-icon {
+  font-size: 48px;
+  opacity: 0.2;
+  position: relative;
+  top: -10px;
+}
+
+/* Ventilation Card */
+.ventilation-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  transition: var(--transition);
+}
+
+.ventilation-card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.ventilation-info {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.ventilation-icon {
+  width: 56px;
+  height: 56px;
+  background: var(--primary-soft);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: var(--primary);
+}
+
+[data-theme="dark"] .ventilation-icon {
+  background: rgba(59,130,246,0.15);
+  color: var(--secondary);
+}
+
+.ventilation-text h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.ventilation-text p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.ventilation-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 72px;
+  height: 36px;
+  background: var(--border);
+  border-radius: 40px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.toggle-switch.active {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 30px;
+  height: 30px;
+  background: white;
+  border-radius: 50%;
+  transition: left 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.toggle-switch.active .toggle-slider {
+  left: 39px;
+}
+
+.vent-status-badge {
+  padding: 7px 16px;
+  border-radius: 40px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-on {
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid rgba(16,185,129,0.2);
+}
+
+.status-off {
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.settings-btn, .dark-mode-btn {
+  background: none;
+  border: 1px solid var(--border);
+  padding: 8px 18px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition);
+}
+
+.settings-btn:hover, .dark-mode-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-soft);
+  transform: translateY(-1px);
+}
+
+/* Chart Section */
+.chart-section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.chart-title {
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+}
+
+.chart-legend {
+  display: flex;
+  gap: 20px;
+  font-size: 12px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-overlay.open {
+  display: flex;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: 28px;
+  width: 90%;
+  max-width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-xl);
+  animation: slideUp 0.3s ease;
+  border: 1px solid var(--border);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--gray);
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  transition: var(--transition);
+}
+
+.modal-close:hover {
+  background: var(--border);
+}
+
+.modal-body {
+  padding: 24px 28px;
+}
+
+.modal-footer {
+  padding: 20px 28px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.setting-item {
+  margin-bottom: 24px;
+}
+
+.setting-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.setting-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.toggle-small {
+  position: relative;
+  width: 46px;
+  height: 24px;
+  background: var(--border);
+  border-radius: 40px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.toggle-small.active {
+  background: var(--primary);
+}
+
+.toggle-small-slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: left 0.3s;
+  box-shadow: var(--shadow-sm);
+}
+
+.toggle-small.active .toggle-small-slider {
+  left: 24px;
+}
+
+.btn-primary {
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 40px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  padding: 10px 22px;
+  border-radius: 40px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text);
+}
+
+.btn-secondary:hover {
+  background: var(--border);
+  transform: translateY(-1px);
+}
+
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--dark);
+  color: white;
+  padding: 14px 28px;
+  border-radius: 60px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1100;
+  transition: transform 0.3s;
+  box-shadow: var(--shadow-lg);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast-icon {
+  width: 20px;
+  height: 20px;
+  background: var(--success);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .app-header { padding: 0 16px; }
+  .top-bar { padding: 12px 16px; flex-direction: column; text-align: center; }
+  .main-content { padding: 20px; }
+  .stats-grid { grid-template-columns: 1fr; gap: 16px; }
+  .stat-value { font-size: 26px; }
+  .presence-counter { font-size: 40px; }
+  .ventilation-controls { width: 100%; justify-content: space-between; }
+  .header-actions { gap: 8px; }
+  .header-btn { padding: 6px 12px; font-size: 11px; }
+  .chart-legend { font-size: 10px; gap: 12px; }
+}
+
+@media (max-width: 480px) {
+  .header-btn span { display: none; }
+  .header-btn { padding: 8px 12px; }
+  .stat-card { padding: 16px; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stat-card, .presence-card, .ventilation-card, .chart-section {
+  animation: fadeInUp 0.5s ease forwards;
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <a href="accueil.html" class="header-brand">
+    <div class="header-icon">🌿</div>
+    <div>
+      <div class="header-title">Smart Classroom</div>
+      <div class="header-sub">Tableau de bord IoT</div>
+    </div>
+  </a>
+  <div class="header-actions">
+    <button class="dark-mode-btn" id="darkModeBtn" onclick="toggleDarkMode()">
+      <i class="fas fa-moon"></i> <span id="darkModeText">Sombre</span>
+    </button>
+    <a href="historique.html" class="header-btn"><i class="fas fa-history"></i> <span>Historique</span></a>
+    <a href="admin.html" class="header-btn" id="adminBtn" style="display:none"><i class="fas fa-shield-alt"></i> <span>Admin</span></a>
+    <button class="header-btn logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Quitter</span></button>
+  </div>
+</header>
+
+<div class="top-bar">
+  <div><span class="online-dot"></span> Système connecté — <span id="datetime"></span></div>
+  <div><i class="fas fa-user-circle"></i> Connecté : <strong id="user-display"></strong></div>
+</div>
+
+<div class="status-bar" id="statusBar">
+  <i class="fas fa-hourglass-half"></i> Système inactif depuis plus de 2 minutes — données effacées.
+</div>
+
+<main class="main-content">
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon icon-temp"><i class="fas fa-thermometer-half"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Température</div>
+        <div class="stat-value"><span id="temp">--</span><span class="stat-unit">°C</span></div>
+        <div class="stat-sub" id="temp-status">En attente...</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon icon-future"><i class="fas fa-chart-line"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Prévision IA</div>
+        <div class="stat-value"><span id="future">--</span><span class="stat-unit">°C</span></div>
+        <div class="stat-sub">Température dans 10 min</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon icon-hum"><i class="fas fa-tint"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Humidité</div>
+        <div class="stat-value"><span id="hum">--</span><span class="stat-unit">%</span></div>
+        <div class="stat-sub" id="hum-status">En attente...</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon icon-pir"><i class="fas fa-running"></i></div>
+      <div class="stat-info">
+        <div class="stat-label">Détection PIR</div>
+        <div class="stat-value" id="pir" style="font-size: 16px; font-weight: 500;">--</div>
+        <div class="stat-sub">Mouvement en temps réel</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="presence-card">
+    <div>
+      <div class="presence-label"><i class="fas fa-users"></i> Présence actuelle</div>
+      <div class="presence-counter" id="people-big">0</div>
+      <div class="presence-label" style="margin-top: 8px;">personne(s) dans la salle</div>
+    </div>
+    <div>
+      <div class="presence-label">Détection automatique</div>
+      <div style="font-size: 13px; opacity: 0.85;">Mise à jour via RFID & PIR</div>
+    </div>
+    <div class="presence-icon">
+      <i class="fas fa-chalkboard-user"></i>
+    </div>
+  </div>
+
+  <div class="ventilation-card">
+    <div class="ventilation-info">
+      <div class="ventilation-icon"><i class="fas fa-fan"></i></div>
+      <div class="ventilation-text">
+        <h3>Contrôle de la ventilation</h3>
+        <p>Activez ou désactivez manuellement la ventilation</p>
+      </div>
+    </div>
+    <div class="ventilation-controls">
+      <div class="toggle-switch" id="ventToggle" onclick="toggleVentilation()">
+        <div class="toggle-slider">💨</div>
+      </div>
+      <span class="vent-status-badge status-off" id="ventBadge">Désactivée</span>
+      <button class="settings-btn" onclick="openSettingsModal()">
+        <i class="fas fa-sliders-h"></i> Réglages
+      </button>
+    </div>
+  </div>
+
+  <div class="chart-section">
+    <div class="chart-header">
+      <div class="chart-title"><i class="fas fa-chart-line" style="color: var(--primary);"></i> Évolution des données</div>
+      <div class="chart-legend">
+        <span><span class="legend-dot" style="background: var(--primary);"></span> Température</span>
+        <span><span class="legend-dot" style="background: var(--warning);"></span> Prévision IA</span>
+        <span><span class="legend-dot" style="background: var(--info);"></span> Humidité</span>
+      </div>
+    </div>
+    <canvas id="chart" height="100"></canvas>
+  </div>
+
+</main>
+
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3><i class="fas fa-sliders-h"></i> Préférences</h3>
+      <button class="modal-close" onclick="closeSettingsModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="setting-item">
+        <div class="setting-label">
+          <span><i class="fas fa-fan"></i> Contrôle manuel</span>
+          <div class="toggle-small" id="manualVentToggle" onclick="toggleManualVentSetting()">
+            <div class="toggle-small-slider"></div>
+          </div>
+        </div>
+        <div class="setting-desc">Permet de commander la ventilation depuis ce tableau de bord.</div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-label">
+          <span><i class="fas fa-bell"></i> Alertes présence</span>
+          <div class="toggle-small" id="presenceNotifToggle" onclick="togglePresenceNotifSetting()">
+            <div class="toggle-small-slider"></div>
+          </div>
+        </div>
+        <div class="setting-desc">Recevoir une notification lors des entrées/sorties.</div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-label">
+          <span><i class="fas fa-chart-simple"></i> Prévision IA</span>
+          <div class="toggle-small" id="showForecastToggle" onclick="toggleForecastSetting()">
+            <div class="toggle-small-slider"></div>
+          </div>
+        </div>
+        <div class="setting-desc">Afficher la température prédite par l'intelligence artificielle.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeSettingsModal()">Annuler</button>
+      <button class="btn-primary" onclick="saveSettings()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-icon">✓</div>
+  <span id="toastMessage">Message</span>
+</div>
+
+<script>
+// Firebase Configuration
+var firebaseConfig = {
+  apiKey: "AIzaSyCnTQ4wiPX6_N6EZ9ew53jl3VXIVmetrYQ",
+  authDomain: "smartclassroomai-f4ffe.firebaseapp.com",
+  databaseURL: "https://smartclassroomai-f4ffe-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "smartclassroomai-f4ffe",
+  storageBucket: "smartclassroomai-f4ffe.firebasestorage.app",
+  messagingSenderId: "775061606543",
+  appId: "1:775061606543:web:0f0b5c9dd8ebcf61aae0fa"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+var database = firebase.database();
+var db = firebase.firestore();
+
+// User Info
+var userEmail = sessionStorage.getItem("user") || "";
+var userRole = sessionStorage.getItem("role") || "";
+
+document.getElementById("user-display").innerText = userEmail;
+if (userRole === "admin") {
+  document.getElementById("adminBtn").style.display = "inline-flex";
+}
+
+// Dark Mode
+var darkMode = localStorage.getItem("darkMode") === "true";
+function toggleDarkMode() {
+  darkMode = !darkMode;
+  localStorage.setItem("darkMode", darkMode);
+  document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
+  updateDarkModeUI();
+}
+
+function updateDarkModeUI() {
+  var btn = document.getElementById("darkModeBtn");
+  var text = document.getElementById("darkModeText");
+  if (darkMode) {
+    text.textContent = "Clair";
+    btn.innerHTML = '<i class="fas fa-sun"></i> <span id="darkModeText">Clair</span>';
+  } else {
+    text.textContent = "Sombre";
+    btn.innerHTML = '<i class="fas fa-moon"></i> <span id="darkModeText">Sombre</span>';
+  }
+}
+
+if (darkMode) {
+  document.documentElement.setAttribute("data-theme", "dark");
+}
+updateDarkModeUI();
+
+// Settings
+var settings = {
+  manualVentEnabled: false,
+  presenceNotifications: true,
+  showForecast: true,
+  tempAlertThreshold: 28
+};
+
+function loadSettings() {
+  db.collection("settings").doc("system").get().then(function(sysDoc) {
+    if (sysDoc.exists && sysDoc.data().tempMax) {
+      settings.tempAlertThreshold = sysDoc.data().tempMax;
+    } else {
+      settings.tempAlertThreshold = 28;
+    }
+    
+    var userKey = "user_" + userEmail.replace(/[.#$[\]]/g, "_");
+    db.collection("dashboard_settings").doc(userKey).get().then(function(doc) {
+      if (doc.exists) {
+        var s = doc.data();
+        settings.manualVentEnabled = s.manualVentEnabled || false;
+        settings.presenceNotifications = s.presenceNotifications !== false;
+        settings.showForecast = s.showForecast !== false;
+      }
+      
+      var manualToggle = document.getElementById("manualVentToggle");
+      if (settings.manualVentEnabled) {
+        manualToggle.classList.add("active");
+      } else {
+        manualToggle.classList.remove("active");
+      }
+      
+      var notifToggle = document.getElementById("presenceNotifToggle");
+      if (settings.presenceNotifications) {
+        notifToggle.classList.add("active");
+      } else {
+        notifToggle.classList.remove("active");
+      }
+      
+      var forecastToggle = document.getElementById("showForecastToggle");
+      if (settings.showForecast) {
+        forecastToggle.classList.add("active");
+        document.querySelector(".stat-card:nth-child(2)").style.display = "flex";
+      } else {
+        forecastToggle.classList.remove("active");
+        document.querySelector(".stat-card:nth-child(2)").style.display = "none";
+      }
+      
+      updateVentilationUI();
+    });
+  }).catch(function(err) {
+    console.log("Erreur chargement seuils système", err);
+    settings.tempAlertThreshold = 28;
+  });
+}
+
+function saveSettings() {
+  settings.manualVentEnabled = document.getElementById("manualVentToggle").classList.contains("active");
+  settings.presenceNotifications = document.getElementById("presenceNotifToggle").classList.contains("active");
+  settings.showForecast = document.getElementById("showForecastToggle").classList.contains("active");
+  
+  var userKey = "user_" + userEmail.replace(/[.#$[\]]/g, "_");
+  db.collection("dashboard_settings").doc(userKey).set({
+    manualVentEnabled: settings.manualVentEnabled,
+    presenceNotifications: settings.presenceNotifications,
+    showForecast: settings.showForecast
+  }).then(function() {
+    showToast("Paramètres enregistrés !");
+    closeSettingsModal();
+    
+    var forecastCard = document.querySelector(".stat-card:nth-child(2)");
+    if (settings.showForecast) {
+      forecastCard.style.display = "flex";
+    } else {
+      forecastCard.style.display = "none";
+    }
+    
+    updateVentilationUI();
+  }).catch(function() {
+    showToast("Erreur lors de l'enregistrement", true);
+  });
+}
+
+function openSettingsModal() {
+  document.getElementById("settingsModal").classList.add("open");
+}
+
+function closeSettingsModal() {
+  document.getElementById("settingsModal").classList.remove("open");
+}
+
+function toggleManualVentSetting() {
+  var toggle = document.getElementById("manualVentToggle");
+  toggle.classList.toggle("active");
+}
+
+function togglePresenceNotifSetting() {
+  var toggle = document.getElementById("presenceNotifToggle");
+  toggle.classList.toggle("active");
+}
+
+function toggleForecastSetting() {
+  var toggle = document.getElementById("showForecastToggle");
+  toggle.classList.toggle("active");
+}
+
+var ventState = false;
+
+database.ref("commandes/ventilation").on("value", function(snap) {
+  ventState = (snap.val() === "ON");
+  updateVentilationUI();
+});
+
+function updateVentilationUI() {
+  var toggle = document.getElementById("ventToggle");
+  var badge = document.getElementById("ventBadge");
+  
+  if (settings.manualVentEnabled) {
+    toggle.style.opacity = "1";
+    toggle.style.cursor = "pointer";
+    if (ventState) {
+      toggle.classList.add("active");
+      badge.className = "vent-status-badge status-on";
+      badge.innerHTML = '<i class="fas fa-check-circle"></i> Activée';
+    } else {
+      toggle.classList.remove("active");
+      badge.className = "vent-status-badge status-off";
+      badge.innerHTML = '<i class="fas fa-power-off"></i> Désactivée';
+    }
+  } else {
+    toggle.style.opacity = "0.5";
+    toggle.style.cursor = "not-allowed";
+    badge.className = "vent-status-badge status-off";
+    badge.innerHTML = '<i class="fas fa-lock"></i> Mode auto';
+  }
+}
+
+function toggleVentilation() {
+  if (!settings.manualVentEnabled) {
+    showToast("Le contrôle manuel est désactivé...", true);
+    return;
+  }
+  var newState = ventState ? "OFF" : "ON";
+  database.ref("commandes/ventilation").set(newState).then(function() {
+    showToast(newState === "ON" ? "Ventilation activée" : "Ventilation désactivée");
+  }).catch(function() {
+    showToast("Erreur lors du changement", true);
+  });
+}
+
+function showToast(message, isError) {
+  var toast = document.getElementById("toast");
+  var toastMessage = document.getElementById("toastMessage");
+  var toastIcon = toast.querySelector(".toast-icon");
+  
+  toastMessage.textContent = message;
+  
+  if (isError) {
+    toast.style.background = "#dc2626";
+    toastIcon.style.background = "#fff";
+    toastIcon.style.color = "#dc2626";
+    toastIcon.textContent = "!";
+  } else {
+    toast.style.background = "#1e293b";
+    toastIcon.style.background = "#10b981";
+    toastIcon.style.color = "#fff";
+    toastIcon.textContent = "✓";
+  }
+  
+  toast.classList.add("show");
+  setTimeout(function() {
+    toast.classList.remove("show");
+  }, 3000);
+}
+
+setInterval(function() {
+  var now = new Date();
+  document.getElementById("datetime").innerText = now.toLocaleDateString("fr-FR") + " " + now.toLocaleTimeString("fr-FR");
+}, 1000);
+
+var labels = [], tempData = [], futureData = [], humData = [];
+var chart = new Chart(document.getElementById("chart"), {
+  type: "line",
+  data: {
+    labels: labels,
+    datasets: [
+      { label: "Température (°C)", data: tempData, borderColor: "#1e6f5c", backgroundColor: "rgba(30,111,92,0.08)", tension: 0.4, fill: true, pointRadius: 3, pointBackgroundColor: "#1e6f5c" },
+      { label: "Temp. Future (°C)", data: futureData, borderColor: "#f59e0b", backgroundColor: "rgba(245,158,11,0.08)", tension: 0.4, fill: true, borderDash: [5, 5], pointRadius: 2 },
+      { label: "Humidité (%)", data: humData, borderColor: "#3b82f6", backgroundColor: "rgba(59,130,246,0.08)", tension: 0.4, fill: true, pointRadius: 3, pointBackgroundColor: "#3b82f6" }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: { legend: { position: "top", labels: { font: { family: "'Inter', sans-serif", size: 11, color: "var(--text)" } } } },
+    scales: { y: { beginAtZero: false, grid: { color: "var(--border)" }, ticks: { color: "var(--text-muted)" } }, x: { grid: { display: false }, ticks: { color: "var(--text-muted)", maxTicksLimit: 8 } } }
+  }
+});
+
+var lastUpdateTime = Date.now();
+var alreadyReset = false;
+var lastPeopleCount = 0;
+
+database.ref("smart_classroom").limitToLast(20).on("value", function(snap) {
+  if (!snap.hasChildren()) return;
+  lastUpdateTime = Date.now();
+  alreadyReset = false;
+  document.getElementById("statusBar").classList.remove("visible");
+  
+  labels.length = 0;
+  tempData.length = 0;
+  futureData.length = 0;
+  humData.length = 0;
+  
+  var last = null;
+  snap.forEach(function(child) {
+    last = child.val();
+    labels.push(last.heure || "");
+    tempData.push(last.temperature || null);
+    futureData.push(last.temp_future || null);
+    humData.push(last.humidite || null);
+  });
+  
+  if (last) {
+    var temp = parseFloat(last.temperature) || 0;
+    var hum = parseFloat(last.humidite) || 0;
+    var future = parseFloat(last.temp_future) || 0;
+    
+    document.getElementById("temp").innerHTML = temp.toFixed(1);
+    document.getElementById("future").innerHTML = future.toFixed(1);
+    document.getElementById("hum").innerHTML = hum.toFixed(1);
+    document.getElementById("pir").innerHTML = last.pir == 1 ? '<span style="color: #10b981;"><i class="fas fa-circle"></i> Mouvement détecté</span>' : '<span style="color: #94a3b8;"><i class="fas fa-circle"></i> Aucun mouvement</span>';
+    
+    var tempStatus = document.getElementById("temp-status");
+    var systemThreshold = settings.tempAlertThreshold || 28;
+    
+    if (temp > systemThreshold) {
+      tempStatus.innerHTML = '<span style="color: #dc2626;"><i class="fas fa-exclamation-triangle"></i> Alerte : température élevée</span>';
+    } else if (temp < 18) {
+      tempStatus.innerHTML = '<span style="color: #0891b2;"><i class="fas fa-snowflake"></i> Température basse</span>';
+    } else {
+      tempStatus.innerHTML = '<span style="color: #10b981;"><i class="fas fa-check-circle"></i> Température normale</span>';
+    }
+    
+    var humStatus = document.getElementById("hum-status");
+    if (hum > 70) {
+      humStatus.innerHTML = '<span style="color: #dc2626;"><i class="fas fa-exclamation-triangle"></i> Humidité excessive</span>';
+    } else if (hum < 30) {
+      humStatus.innerHTML = '<span style="color: #f59e0b;"><i class="fas fa-tint-slash"></i> Air sec</span>';
+    } else {
+      humStatus.innerHTML = '<span style="color: #10b981;"><i class="fas fa-check-circle"></i> Humidité normale</span>';
+    }
+  }
+  chart.update();
+});
+
+database.ref("compteur/personnes").on("value", function(snap) {
+  var val = snap.val() || 0;
+  document.getElementById("people-big").innerHTML = val;
+  
+  if (settings.presenceNotifications && val !== lastPeopleCount && document.hidden) {
+    showToast("👥 Présence : " + val + " personne(s) dans la salle");
+  }
+  lastPeopleCount = val;
+});
+
+setInterval(function() {
+  var diff = (Date.now() - lastUpdateTime) / 1000;
+  if (diff > 120 && !alreadyReset) {
+    alreadyReset = true;
+    document.getElementById("statusBar").classList.add("visible");
+    database.ref("smart_classroom").remove();
+    database.ref("compteur/personnes").set(0);
+  }
+}, 5000);
+
+function logout() {
+  var myKey = userEmail.replace(/[.#$[\]]/g, "_");
+  database.ref("online/" + myKey).remove();
+  sessionStorage.removeItem("user");
+  sessionStorage.removeItem("role");
+  window.location.href = "login.html";
+}
+
+loadSettings();
+
+if ("Notification" in window && Notification.permission === "default") {
+  Notification.requestPermission();
+}
+</script>
+</body>
+</html>

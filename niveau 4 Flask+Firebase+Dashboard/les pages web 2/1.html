@@ -1,0 +1,3344 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — Smart Classroom</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+/* ══════════════════════════════════════════
+   RESET & BASE (conservé intégralement)
+══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ══════════════════════════════════════════
+   THÈMES (conservé)
+══════════════════════════════════════════ */
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-light: #eff6ff;
+  --primary-glow: rgba(37, 99, 235, 0.15);
+  --bg: #f0f4f8;
+  --bg2: #e8edf3;
+  --surface: #ffffff;
+  --surface2: #f8fafc;
+  --text: #0f172a;
+  --text2: #1e293b;
+  --muted: #64748b;
+  --subtle: #94a3b8;
+  --border: #e2e8f0;
+  --border2: #cbd5e1;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --orange: #f59e0b;
+  --orange-light: #fffbeb;
+  --purple: #7c3aed;
+  --purple-light: #faf5ff;
+  --cyan: #06b6d4;
+  --cyan-light: #ecfeff;
+  --sw: 256px;
+  --header-h: 64px;
+  --header-bg: linear-gradient(135deg, #0f172a 0%, #1e3a5f 55%, #1d4ed8 100%);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.06);
+  --shadow: 0 1px 4px rgba(0,0,0,.06), 0 2px 8px rgba(0,0,0,.04);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.1), 0 2px 8px rgba(0,0,0,.05);
+  --shadow-xl: 0 20px 60px rgba(0,0,0,.15), 0 4px 16px rgba(0,0,0,.08);
+}
+
+[data-theme="dark"] {
+  --bg: #0c1220;
+  --bg2: #0f172a;
+  --surface: #1a2540;
+  --surface2: #141d30;
+  --text: #f0f6ff;
+  --text2: #cbd5e1;
+  --muted: #94a3b8;
+  --subtle: #64748b;
+  --border: #243050;
+  --border2: #2e3f60;
+  --primary-light: #1e3a5f;
+  --primary-glow: rgba(37, 99, 235, 0.25);
+  --green-light: #052e16;
+  --red-light: #2d0a0a;
+  --orange-light: #291a00;
+  --purple-light: #1a0d33;
+  --cyan-light: #042024;
+  --header-bg: linear-gradient(135deg, #050d1a 0%, #0a1628 55%, #1d4ed8 100%);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.3);
+  --shadow: 0 1px 4px rgba(0,0,0,.3), 0 2px 8px rgba(0,0,0,.2);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.3);
+  --shadow-xl: 0 20px 60px rgba(0,0,0,.5), 0 4px 16px rgba(0,0,0,.4);
+}
+
+[data-theme="dark"] .h-btn:not(.h-logout) { color: #e2e8f0 }
+[data-theme="dark"] .nav-item:hover { background: #1e293b }
+[data-theme="dark"] .nav-item.active { background: rgba(37,99,235,.18) }
+[data-theme="dark"] thead tr { background: var(--bg) }
+[data-theme="dark"] tbody tr:hover { background: var(--bg) }
+[data-theme="dark"] .chat-messages { background: var(--bg) }
+[data-theme="dark"] .msg-bubble.theirs { background: #1e293b; border-color: #334155; color: var(--text) }
+[data-theme="dark"] .chat-input-row { background: var(--surface) }
+[data-theme="dark"] .chat-input-area { background: var(--surface) }
+[data-theme="dark"] .chat-input { background: var(--bg2); color: var(--text); border-color: var(--border) }
+[data-theme="dark"] .fg input, [data-theme="dark"] .fg select, [data-theme="dark"] .fg textarea,
+[data-theme="dark"] .m-field input, [data-theme="dark"] .m-field select, [data-theme="dark"] .m-field textarea,
+[data-theme="dark"] .sett-inp, [data-theme="dark"] .srch input, [data-theme="dark"] .filter-sel {
+  background: var(--bg); color: var(--text); border-color: var(--border)
+}
+[data-theme="dark"] .modal { background: var(--surface) }
+[data-theme="dark"] .btn-cancel, [data-theme="dark"] .btn-secondary { background: var(--surface2); color: var(--muted); border-color: var(--border) }
+[data-theme="dark"] .notif-type-btn, [data-theme="dark"] .sett-item { background: var(--bg); border-color: var(--border) }
+[data-theme="dark"] .annonce-card, [data-theme="dark"] .alert-card { background: var(--surface); border-color: var(--border) }
+[data-theme="dark"] .nh-item { background: var(--bg) }
+[data-theme="dark"] .sb-user { background: var(--bg) }
+[data-theme="dark"] .save-bar { background: rgba(37,99,235,.12); border-color: rgba(37,99,235,.25) }
+[data-theme="dark"] .log-item { border-bottom-color: var(--border) }
+[data-theme="dark"] .stat-bar-bg { background: var(--border) }
+[data-theme="dark"] .hist-card, [data-theme="dark"] .stat-section-card { background: var(--surface) !important; border-color: var(--border) !important }
+[data-theme="dark"] .chat-hd { background: var(--surface) }
+[data-theme="dark"] .group-item:hover { background: var(--bg) }
+[data-theme="dark"] .group-item.active { background: rgba(37,99,235,.15) }
+[data-theme="dark"] .dm-item:hover { background: var(--bg) }
+[data-theme="dark"] .dm-item.active { background: rgba(37,99,235,.15) }
+[data-theme="dark"] .pg-btn { background: var(--surface); color: var(--muted); border-color: var(--border) }
+[data-theme="dark"] .af-btn { background: var(--surface); color: var(--muted) }
+[data-theme="dark"] .sf-btn { background: var(--surface); color: var(--muted) }
+[data-theme="dark"] .chat-tab { background: transparent }
+[data-theme="dark"] .session-warn-bar { background: #7c2d12; border-color: #9a3412 }
+[data-theme="dark"] .note { background: rgba(37,99,235,.12); color: #93c5fd }
+[data-theme="dark"] .iot-card { background: var(--surface) }
+[data-theme="dark"] thead tr { background: var(--bg2) }
+[data-theme="dark"] .s-card { background: var(--surface) }
+[data-theme="dark"] .ic-b, [data-theme="dark"] .ic-g, [data-theme="dark"] .ic-o,
+[data-theme="dark"] .ic-p, [data-theme="dark"] .ic-r, [data-theme="dark"] .ic-c { filter: brightness(.6) }
+[data-theme="dark"] .gsearch-results { background: var(--surface); border-color: var(--border) }
+[data-theme="dark"] .gs-item:hover { background: var(--bg) }
+[data-theme="dark"] .kbd-btn { background: var(--surface); border-color: var(--border); color: var(--muted) }
+[data-theme="dark"] .kbd-key { background: var(--bg); border-color: var(--border); color: var(--text) }
+[data-theme="dark"] .msg-date-sep span { background: var(--bg) }
+[data-theme="dark"] .sb-div { background: var(--border) }
+[data-theme="dark"] .iot-bar-bg { background: var(--border) }
+[data-theme="dark"] .date-range-wrap input { background: var(--bg); color: var(--text); border-color: var(--border) }
+[data-theme="dark"] .notif-type-btn.selected { background: rgba(37,99,235,.2); color: #93c5fd; border-color: rgba(37,99,235,.4) }
+[data-theme="dark"] .trend-chart-wrap { background: transparent }
+[data-theme="dark"] .chat-search-inp { background: var(--bg); color: var(--text); border-color: var(--border) }
+[data-theme="dark"] .chat-search-bar { background: var(--surface) }
+
+/* ══════════════════════════════════════════
+   SCROLLBARS
+══════════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; height: 6px }
+::-webkit-scrollbar-track { background: transparent }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 100px }
+::-webkit-scrollbar-thumb:hover { background: var(--muted) }
+
+/* ══════════════════════════════════════════
+   BASE
+══════════════════════════════════════════ */
+html, body { height: 100% }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background .25s, color .25s;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ══════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════ */
+.app-header {
+  background: var(--header-bg);
+  color: #fff;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  position: sticky;
+  top: 0;
+  z-index: 300;
+  box-shadow: 0 2px 24px rgba(0,0,0,.35);
+}
+.h-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0 }
+.h-icon {
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.h-title { font-size: 15px; font-weight: 800; letter-spacing: -.3px }
+.h-sub { font-size: 10.5px; opacity: .55; font-weight: 500 }
+.h-right { display: flex; align-items: center; gap: 6px }
+.h-btn {
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.2);
+  color: #fff;
+  padding: 7px 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 5px;
+  transition: all .2s;
+  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
+}
+.h-btn:hover { background: rgba(255,255,255,.24); transform: translateY(-1px) }
+.h-logout { background: rgba(239,68,68,.2); border-color: rgba(239,68,68,.3) }
+.h-logout:hover { background: rgba(239,68,68,.4) }
+.hamburger {
+  display: none;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.2);
+  color: #fff;
+  width: 38px; height: 38px;
+  border-radius: 8px;
+  cursor: pointer;
+  align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ══════════════════════════════════════════
+   GLOBAL SEARCH
+══════════════════════════════════════════ */
+.gsearch-wrap { position: relative; flex: 1; max-width: 360px; margin: 0 12px }
+.gsearch-inp {
+  width: 100%;
+  padding: 9px 14px 9px 36px;
+  border: 1.5px solid rgba(255,255,255,.22);
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  background: rgba(255,255,255,.1);
+  color: #fff;
+  transition: all .2s;
+}
+.gsearch-inp::placeholder { color: rgba(255,255,255,.45) }
+.gsearch-inp:focus { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.5); box-shadow: 0 0 0 3px rgba(255,255,255,.08) }
+.gsearch-ic { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 14px; pointer-events: none }
+.gsearch-results {
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-xl);
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 999;
+  display: none;
+}
+.gsearch-results.open { display: block }
+.gs-section { padding: 10px 14px 5px; font-size: 10px; font-weight: 700; color: var(--subtle); text-transform: uppercase; letter-spacing: .9px }
+.gs-item { padding: 10px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text); transition: background .15s; border-radius: 6px; margin: 1px 4px }
+.gs-item:hover { background: var(--bg) }
+.gs-item-ic { font-size: 15px; flex-shrink: 0; width: 22px; text-align: center }
+.gs-item-sub { font-size: 11.5px; color: var(--muted) }
+.gs-empty { padding: 20px 14px; text-align: center; color: var(--subtle); font-size: 13px }
+
+/* ══════════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════════ */
+.app-body { display: flex; flex: 1; overflow: hidden; position: relative }
+
+/* ══════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════ */
+.sidebar {
+  width: var(--sw);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: sticky; top: var(--header-h);
+  height: calc(100vh - var(--header-h));
+  overflow-y: auto;
+  flex-shrink: 0;
+  transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s;
+}
+.sb-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 199;
+  backdrop-filter: blur(3px);
+}
+.sb-section { padding: 16px 10px 6px }
+.sb-label {
+  font-size: 10px; font-weight: 700; color: var(--subtle);
+  text-transform: uppercase; letter-spacing: 1.1px;
+  padding: 0 10px; margin-bottom: 5px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13.5px; font-weight: 500; color: var(--muted);
+  transition: all .17s;
+  text-decoration: none; border: none; background: none;
+  width: 100%; text-align: left;
+  font-family: 'Inter', sans-serif;
+}
+.nav-item:hover { background: var(--bg); color: var(--text); padding-left: 14px }
+.nav-item.active { background: var(--primary-light); color: var(--primary); font-weight: 700 }
+[data-theme="dark"] .nav-item.active { background: rgba(37,99,235,.18); color: #93c5fd }
+.nav-ic { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0 }
+.n-badge { margin-left: auto; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px }
+.nb-blue { background: var(--primary-light); color: var(--primary) }
+.nb-red { background: var(--red-light); color: var(--red) }
+.nb-amber { background: var(--orange-light); color: #92400e }
+[data-theme="dark"] .nb-blue { background: rgba(37,99,235,.2); color: #93c5fd }
+[data-theme="dark"] .nb-red { background: rgba(239,68,68,.15); color: #fca5a5 }
+.sb-div { height: 1px; background: var(--border); margin: 6px 10px }
+.sb-footer { margin-top: auto; padding: 14px 10px; border-top: 1px solid var(--border) }
+.sb-user {
+  background: var(--bg);
+  border-radius: 10px; padding: 12px;
+  display: flex; align-items: center; gap: 9px;
+  border: 1px solid var(--border);
+}
+.ava {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--cyan));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 15px; font-weight: 800; flex-shrink: 0;
+  box-shadow: 0 2px 8px var(--primary-glow);
+}
+.ava-email { font-size: 11.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px }
+.ava-role { font-size: 11px; color: var(--primary); font-weight: 600; margin-top: 1px }
+[data-theme="dark"] .ava-role { color: #93c5fd }
+
+/* ══════════════════════════════════════════
+   MAIN CONTENT
+══════════════════════════════════════════ */
+.main-content { flex: 1; padding: 28px; overflow-y: auto }
+.page { display: none }
+.page.active { display: block; animation: fadeUp .25s ease }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
+.pg-title { font-size: 22px; font-weight: 900; color: var(--text); margin-bottom: 4px; letter-spacing: -.5px }
+.pg-sub { font-size: 13.5px; color: var(--muted); margin-bottom: 24px }
+
+/* ══════════════════════════════════════════
+   SESSION WARN
+══════════════════════════════════════════ */
+.session-warn-bar {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: #7f1d1d; color: #fff;
+  padding: 13px 22px; border-radius: 14px;
+  font-size: 13.5px; font-weight: 600;
+  display: none; align-items: center; gap: 14px;
+  z-index: 8000;
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  border: 1px solid #991b1b;
+  backdrop-filter: blur(8px);
+}
+.session-warn-bar.visible { display: flex }
+
+/* ══════════════════════════════════════════
+   IOT CARDS — AMÉLIORÉES
+══════════════════════════════════════════ */
+.iot-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 26px }
+.iot-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  position: relative; overflow: hidden;
+  transition: box-shadow .2s, transform .2s;
+}
+.iot-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px) }
+.iot-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.iot-card.card-blue::before { background: linear-gradient(90deg, var(--primary), var(--cyan)) }
+.iot-card.card-green::before { background: linear-gradient(90deg, var(--green), #34d399) }
+.iot-card.card-orange::before { background: linear-gradient(90deg, var(--orange), #fbbf24) }
+.iot-card.card-red::before { background: linear-gradient(90deg, var(--red), #f87171) }
+.iot-badge {
+  position: absolute; top: 16px; right: 16px;
+  width: 8px; height: 8px; border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+.iot-label { font-size: 11px; font-weight: 700; color: var(--subtle); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px }
+.iot-value-row { display: flex; align-items: baseline; gap: 4px; margin-bottom: 10px }
+.iot-value { font-size: 36px; font-weight: 900; color: var(--text); line-height: 1; letter-spacing: -1px }
+.iot-unit { font-size: 15px; font-weight: 600; color: var(--muted) }
+.iot-bar-bg {
+  height: 5px; background: var(--border);
+  border-radius: 100px; margin-bottom: 10px;
+  overflow: hidden;
+}
+.iot-bar-fill { height: 100%; border-radius: 100px; transition: width .8s cubic-bezier(.4,0,.2,1) }
+.iot-status { font-size: 11.5px; font-weight: 600; display: flex; align-items: center; gap: 5px }
+.iot-pulse { width: 7px; height: 7px; border-radius: 50%; animation: pulse 2s ease-in-out infinite; flex-shrink: 0 }
+.iot-ai { font-size: 14px; font-weight: 700; color: var(--text); padding: 8px 0; line-height: 1.4 }
+
+/* ══════════════════════════════════════════
+   STATS CARDS — AMÉLIORÉES
+══════════════════════════════════════════ */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 26px }
+.s-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; gap: 14px;
+  transition: box-shadow .2s, transform .2s;
+  position: relative; overflow: hidden;
+}
+.s-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px) }
+.s-ic {
+  width: 52px; height: 52px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.ic-b { background: var(--primary-light) }
+.ic-g { background: var(--green-light) }
+.ic-o { background: var(--orange-light) }
+.ic-p { background: var(--purple-light) }
+.ic-r { background: var(--red-light) }
+.ic-c { background: var(--cyan-light) }
+.s-num { font-size: 32px; font-weight: 900; color: var(--text); line-height: 1; letter-spacing: -1px }
+.s-lbl { font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 4px }
+
+/* ══════════════════════════════════════════
+   CARD GENERIC
+══════════════════════════════════════════ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 22px;
+}
+.card-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+}
+.card-ttl {
+  font-size: 15px; font-weight: 700; color: var(--text);
+  display: flex; align-items: center; gap: 7px;
+}
+
+/* ══════════════════════════════════════════
+   FORMS
+══════════════════════════════════════════ */
+.note {
+  background: var(--primary-light);
+  border-left: 4px solid var(--primary);
+  padding: 11px 14px; border-radius: 0 10px 10px 0;
+  font-size: 13px; color: #1e40af; margin-bottom: 20px; line-height: 1.55;
+}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr 180px; gap: 14px }
+.fg { display: flex; flex-direction: column; gap: 5px }
+.fg label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px }
+.fg input, .fg select, .fg textarea {
+  padding: 10px 13px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13.5px; font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  color: var(--text); background: var(--surface);
+}
+.fg input:focus, .fg select:focus, .fg textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+.fg textarea { resize: vertical; min-height: 90px }
+.pw-wrap { position: relative }
+.pw-wrap input { padding-right: 40px }
+.eye-btn { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 14px; color: var(--muted) }
+.btn-gen { font-size: 12px; background: none; border: none; color: var(--primary); cursor: pointer; margin-top: 3px; text-decoration: underline; text-align: left; padding: 0; font-family: 'Inter', sans-serif; font-weight: 600 }
+.hint { font-size: 11px; color: var(--subtle); margin-top: 2px }
+
+/* ══════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════ */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px; font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer; border: none;
+  transition: all .2s; letter-spacing: -.1px;
+}
+.btn-primary {
+  background: var(--primary); color: #fff;
+  box-shadow: 0 2px 8px var(--primary-glow), 0 1px 2px rgba(0,0,0,.1);
+}
+.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 14px var(--primary-glow) }
+.btn-primary:disabled { background: #94a3b8; cursor: not-allowed; transform: none; box-shadow: none }
+.btn-secondary { background: var(--surface2); color: var(--muted); border: 1.5px solid var(--border) }
+.btn-secondary:hover { background: var(--border); color: var(--text); transform: translateY(-1px) }
+.btn-danger { background: var(--red-light); color: var(--red); border: 1px solid rgba(239,68,68,.2) }
+.btn-danger:hover { background: #fecaca; transform: translateY(-1px) }
+.btn-success { background: var(--green-light); color: #166534; border: 1px solid rgba(16,185,129,.2) }
+.btn-success:hover { background: #dcfce7; transform: translateY(-1px) }
+.btn-sm { padding: 6px 13px; font-size: 12px; border-radius: 7px }
+
+/* ══════════════════════════════════════════
+   TABLE
+══════════════════════════════════════════ */
+.tbl-toolbar {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px; gap: 10px; flex-wrap: wrap;
+}
+.srch { position: relative; flex: 1; min-width: 200px }
+.srch input {
+  width: 100%; padding: 9px 13px 9px 38px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13.5px; font-family: 'Inter', sans-serif;
+  outline: none; transition: border-color .2s, box-shadow .2s;
+  color: var(--text); background: var(--surface);
+}
+.srch input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow) }
+.srch-ic { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--subtle); font-size: 14px }
+.filter-sel {
+  padding: 9px 13px;
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 13px; font-family: 'Inter', sans-serif;
+  outline: none; color: var(--text); background: var(--surface); cursor: pointer;
+}
+.filter-sel:focus { border-color: var(--primary) }
+
+table { width: 100%; border-collapse: collapse }
+thead tr { background: var(--surface2); border-bottom: 2px solid var(--border) }
+thead th {
+  padding: 11px 14px; text-align: left;
+  font-size: 10.5px; font-weight: 700; color: var(--subtle);
+  text-transform: uppercase; letter-spacing: .8px; white-space: nowrap;
+}
+tbody tr { border-bottom: 1px solid var(--border); transition: background .12s }
+[data-theme="dark"] tbody tr { border-bottom-color: var(--border) }
+tbody tr:last-child { border-bottom: none }
+tbody tr:hover { background: var(--surface2) }
+tbody td { padding: 12px 14px; font-size: 13.5px; vertical-align: middle }
+.u-ava {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--cyan));
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 13px; font-weight: 800; margin-right: 9px; vertical-align: middle;
+  box-shadow: 0 1px 4px var(--primary-glow);
+}
+.role-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px }
+.role-admin { background: var(--primary-light); color: var(--primary); border: 1px solid rgba(37,99,235,.15) }
+.role-user { background: var(--green-light); color: #166534; border: 1px solid rgba(16,185,129,.15) }
+[data-theme="dark"] .role-admin { background: rgba(37,99,235,.2); color: #93c5fd; border-color: rgba(37,99,235,.3) }
+[data-theme="dark"] .role-user { background: rgba(16,185,129,.15); color: #6ee7b7; border-color: rgba(16,185,129,.25) }
+.act-btns { display: flex; gap: 6px; flex-wrap: wrap }
+.tbl-empty { text-align: center; padding: 40px 20px; color: var(--subtle); font-size: 14px }
+.last-login { font-size: 11px; color: var(--subtle); margin-top: 2px }
+
+/* PAGINATION */
+.pagi { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; flex-wrap: wrap; gap: 10px }
+.pg-info { font-size: 13px; color: var(--muted) }
+.pg-btns { display: flex; gap: 5px }
+.pg-btn {
+  padding: 7px 13px; border: 1.5px solid var(--border);
+  border-radius: 8px; background: var(--surface); color: var(--muted);
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all .17s;
+  font-family: 'Inter', sans-serif;
+}
+.pg-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light) }
+.pg-btn.active { background: var(--primary); color: #fff; border-color: var(--primary) }
+.pg-btn:disabled { opacity: .35; cursor: not-allowed }
+
+/* ══════════════════════════════════════════
+   MODALS
+══════════════════════════════════════════ */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 900;
+  justify-content: center; align-items: center;
+  backdrop-filter: blur(6px);
+}
+.overlay.open { display: flex; animation: overlayIn .2s ease }
+@keyframes overlayIn { from { opacity: 0 } to { opacity: 1 } }
+.modal {
+  background: var(--surface);
+  border-radius: 18px; padding: 28px;
+  box-shadow: var(--shadow-xl);
+  width: min(480px, 95vw);
+  max-height: 90vh; overflow-y: auto;
+  animation: modalIn .25s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes modalIn { from { opacity: 0; transform: scale(.94) translateY(10px) } to { opacity: 1; transform: scale(1) translateY(0) } }
+.modal h4 { font-size: 17px; font-weight: 800; margin-bottom: 5px; color: var(--text) }
+.modal .m-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px }
+.m-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px }
+.m-field label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px }
+.m-field select, .m-field input, .m-field textarea {
+  padding: 10px 13px; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); font-size: 13.5px;
+  font-family: 'Inter', sans-serif; outline: none;
+  color: var(--text); width: 100%; background: var(--surface);
+  transition: border-color .2s, box-shadow .2s;
+}
+.m-field select:focus, .m-field input:focus, .m-field textarea:focus {
+  border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow);
+}
+.m-field textarea { resize: vertical; min-height: 80px }
+.m-actions { display: flex; gap: 9px; margin-top: 20px; justify-content: flex-end }
+.btn-cancel {
+  background: var(--surface2); color: var(--muted); border: 1.5px solid var(--border);
+  padding: 9px 18px; border-radius: var(--radius-sm); cursor: pointer;
+  font-size: 13.5px; font-weight: 600; font-family: 'Inter', sans-serif;
+  transition: all .2s;
+}
+.btn-cancel:hover { background: var(--border); color: var(--text) }
+
+/* ══════════════════════════════════════════
+   NOTIFICATIONS
+══════════════════════════════════════════ */
+.notif-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px }
+.notif-type-btn {
+  background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 15px; cursor: pointer;
+  text-align: center; transition: all .2s; font-family: 'Inter', sans-serif;
+}
+.notif-type-btn:hover { border-color: var(--primary); background: var(--primary-light); transform: translateY(-2px) }
+.notif-type-btn.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary); box-shadow: 0 2px 8px var(--primary-glow) }
+.notif-type-btn .nb-icon { font-size: 26px; display: block; margin-bottom: 7px }
+.notif-type-btn .nb-lbl { font-size: 13px; font-weight: 700 }
+.notif-type-btn .nb-cnt { font-size: 11px; color: var(--muted); margin-top: 3px }
+.notif-history { display: flex; flex-direction: column; gap: 8px; margin-top: 4px }
+.nh-item {
+  background: var(--bg); border-radius: 10px;
+  padding: 13px 15px; display: flex; align-items: flex-start; gap: 10px;
+  border: 1px solid var(--border);
+}
+.nh-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px }
+.nh-dot.ok { background: var(--green) }
+.nh-dot.fail { background: var(--red) }
+.nh-body { flex: 1 }
+.nh-to { font-size: 13px; font-weight: 700; color: var(--text) }
+.nh-subj { font-size: 12px; color: var(--muted) }
+.nh-time { font-size: 11px; color: var(--subtle); margin-top: 2px }
+
+/* ══════════════════════════════════════════
+   CHAT — MESSENGER STYLE (CORRIGÉ)
+══════════════════════════════════════════ */
+.chat-page-wrap {
+  display: flex; flex-direction: column;
+  height: calc(100vh - var(--header-h) - 72px);
+  min-height: 520px;
+}
+.chat-layout {
+  display: grid; grid-template-columns: 320px 1fr; gap: 0;
+  border: 1px solid var(--border); border-radius: 16px;
+  overflow: hidden; flex: 1; min-height: 0;
+  background: var(--surface);
+  box-shadow: var(--shadow-xl);
+}
+.chat-sidebar {
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  background: var(--surface);
+  overflow: hidden;
+}
+.chat-sidebar-header {
+  padding: 16px 16px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.chat-sidebar-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.chat-sidebar-title {
+  font-size: 18px; font-weight: 900; color: var(--text);
+}
+.chat-new-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--primary-light); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--primary); transition: all .2s;
+  font-family: 'Inter', sans-serif;
+}
+.chat-new-btn:hover { background: var(--primary); color: #fff; transform: scale(1.1) }
+.chat-sidebar-search { position: relative }
+.chat-sidebar-search input {
+  width: 100%; padding: 9px 14px 9px 36px;
+  border: none; border-radius: 24px;
+  font-size: 13px; font-family: 'Inter', sans-serif;
+  outline: none; background: var(--bg2); color: var(--text);
+  transition: all .2s;
+}
+.chat-sidebar-search input:focus { background: var(--bg); box-shadow: 0 0 0 2px var(--primary-glow) }
+.chat-sidebar-search-ic {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 13px; color: var(--subtle); pointer-events: none;
+}
+.chat-account-filter {
+  padding: 8px 14px; border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.chat-account-filter label {
+  font-size: 10.5px; font-weight: 700; color: var(--subtle);
+  text-transform: uppercase; letter-spacing: .8px; display: block; margin-bottom: 5px;
+}
+.chat-account-sel {
+  width: 100%; padding: 7px 12px;
+  border: 1.5px solid var(--border); border-radius: 10px;
+  font-size: 12.5px; font-family: 'Inter', sans-serif;
+  outline: none; color: var(--text); background: var(--surface);
+  cursor: pointer; transition: border-color .2s;
+}
+.chat-account-sel:focus { border-color: var(--primary) }
+.chat-viewing-banner {
+  display: none; padding: 6px 14px;
+  background: rgba(37,99,235,.08); border-bottom: 1px solid rgba(37,99,235,.15);
+  font-size: 11.5px; font-weight: 600; color: var(--primary);
+  align-items: center; gap: 6px;
+}
+.chat-viewing-banner.visible { display: flex }
+.chat-tabs {
+  display: flex; padding: 8px 10px; gap: 4px; border-bottom: 1px solid var(--border); background: var(--surface2);
+}
+.chat-tab {
+  flex: 1; padding: 8px 6px; text-align: center;
+  font-size: 12.5px; font-weight: 700; cursor: pointer;
+  color: var(--muted); border: none; background: transparent;
+  font-family: 'Inter', sans-serif;
+  border-radius: 10px; transition: all .18s;
+}
+.chat-tab:hover { background: var(--bg); color: var(--text) }
+.chat-tab.active { background: var(--primary); color: #fff; box-shadow: 0 2px 8px var(--primary-glow) }
+.groups-list, .dm-list { flex: 1; overflow-y: auto }
+.group-item, .dm-item {
+  padding: 10px 14px; cursor: pointer;
+  transition: background .12s; display: flex; align-items: center; gap: 11px;
+  position: relative;
+}
+.group-item:hover, .dm-item:hover { background: var(--bg) }
+.group-item.active, .dm-item.active { background: var(--primary-light) }
+.grp-ava-wrap { position: relative; flex-shrink: 0 }
+.grp-ava {
+  width: 46px; height: 46px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 800;
+  background: linear-gradient(135deg, var(--primary), var(--cyan)); color: #fff;
+  box-shadow: 0 2px 6px var(--primary-glow);
+}
+.grp-ava.dm-ava { background: linear-gradient(135deg, #7c3aed, #06b6d4) }
+.grp-online-dot {
+  position: absolute; bottom: 1px; right: 1px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--green); border: 2px solid var(--surface);
+  display: none;
+}
+.grp-ava-wrap.online .grp-online-dot { display: block }
+.grp-info { flex: 1; min-width: 0 }
+.grp-name { font-size: 13.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.grp-last { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px }
+.grp-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0 }
+.grp-time { font-size: 10.5px; color: var(--subtle) }
+.grp-unread { background: var(--primary); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 100px; min-width: 18px; text-align: center }
+.grp-del-btn {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: var(--red-light); border: none; color: var(--red);
+  border-radius: 6px; padding: 3px 8px; font-size: 11px; cursor: pointer; display: none;
+  transition: all .15s; z-index: 2;
+}
+.group-item:hover .grp-del-btn { display: block }
+.chat-main {
+  display: flex; flex-direction: column; overflow: hidden; min-height: 0;
+  background: var(--bg); position: relative;
+}
+.chat-hd {
+  padding: 12px 18px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface); flex-shrink: 0;
+}
+.chat-hd-left { display: flex; align-items: center; gap: 11px }
+.chat-hd-ava {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--cyan));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 15px; font-weight: 800; flex-shrink: 0;
+}
+.chat-hd-name { font-size: 14.5px; font-weight: 800; color: var(--text) }
+.chat-hd-members { font-size: 11.5px; color: var(--green); font-weight: 600; margin-top: 1px }
+.chat-hd-actions { display: flex; gap: 5px }
+.chat-hd-btn {
+  background: var(--bg); border: none;
+  border-radius: 50%; width: 34px; height: 34px; font-size: 14px;
+  cursor: pointer; color: var(--muted); font-family: 'Inter', sans-serif;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.chat-hd-btn:hover { background: var(--primary-light); color: var(--primary) }
+.chat-search-bar {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  display: none; background: var(--surface);
+}
+.chat-search-bar.visible { display: flex; gap: 8px; align-items: center }
+.chat-search-inp {
+  flex: 1; padding: 8px 13px;
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 13px; font-family: 'Inter', sans-serif; outline: none;
+  color: var(--text); background: var(--bg);
+}
+.chat-search-inp:focus { border-color: var(--primary) }
+.chat-search-close { background: none; border: none; cursor: pointer; font-size: 16px; color: var(--subtle); padding: 4px }
+.chat-messages {
+  flex: 1; overflow-y: auto; padding: 18px 22px;
+  display: flex; flex-direction: column; gap: 4px;
+  background: var(--bg); min-height: 0;
+}
+.msg-empty { text-align: center; color: var(--subtle); font-size: 13.5px; margin: auto; font-weight: 500 }
+.msg-date-sep { text-align: center; margin: 10px 0; position: relative }
+.msg-date-sep span {
+  background: var(--bg); padding: 4px 16px;
+  font-size: 11px; color: var(--subtle); border-radius: 100px;
+  border: 1px solid var(--border); position: relative; z-index: 1; font-weight: 600;
+}
+.msg-date-sep::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--border) }
+.msg-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 2px }
+.msg-row.mine { flex-direction: row-reverse }
+.msg-row.search-highlight .msg-bubble { outline: 2px solid var(--orange); outline-offset: 1px }
+.msg-ava {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--cyan));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0;
+}
+.msg-ava.theirs-ava { background: linear-gradient(135deg, #7c3aed, #06b6d4) }
+.msg-bubble {
+  max-width: 62%; padding: 10px 15px;
+  border-radius: 22px; font-size: 14px; line-height: 1.5;
+  word-break: break-word; white-space: pre-wrap; position: relative;
+}
+.msg-bubble.theirs {
+  background: var(--surface); border: 1px solid var(--border);
+  border-bottom-left-radius: 6px; color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.msg-bubble.mine {
+  background: linear-gradient(135deg, var(--primary), #3b82f6);
+  color: #fff; border-bottom-right-radius: 6px;
+  box-shadow: 0 3px 12px var(--primary-glow);
+}
+.msg-meta { font-size: 10.5px; color: var(--subtle); margin-top: 4px; display: flex; align-items: center; gap: 4px }
+.msg-meta.mine { color: rgba(255,255,255,.65); flex-direction: row-reverse }
+.msg-checks { font-size: 11px }
+.msg-sender { font-size: 11px; font-weight: 700; color: var(--primary); margin-bottom: 4px }
+.msg-reactions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px }
+.reaction-btn {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 100px; padding: 3px 9px; font-size: 12px;
+  cursor: pointer; display: flex; align-items: center; gap: 3px;
+  font-family: 'Inter', sans-serif; transition: all .15s;
+}
+.reaction-btn:hover, .reaction-btn.mine-react {
+  background: var(--primary-light); border-color: var(--primary); color: var(--primary);
+}
+.reaction-cnt { font-size: 11px; font-weight: 700 }
+.emoji-picker {
+  position: absolute; bottom: calc(100% + 8px); right: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 8px 10px;
+  display: none; gap: 5px; z-index: 50;
+  box-shadow: var(--shadow-lg);
+}
+.msg-bubble:hover .emoji-picker { display: flex }
+.ep-btn { background: none; border: none; font-size: 19px; cursor: pointer; padding: 3px 4px; border-radius: 7px; transition: background .15s; line-height: 1 }
+.ep-btn:hover { background: var(--bg) }
+.chat-input-area {
+  flex-shrink: 0; background: var(--surface); border-top: 1px solid var(--border);
+  padding: 12px 16px 14px;
+}
+.chat-input-row { display: flex; gap: 10px; align-items: flex-end }
+.chat-input {
+  flex: 1; padding: 11px 18px;
+  border: 1.5px solid var(--border); border-radius: 26px;
+  font-size: 14px; font-family: 'Inter', sans-serif;
+  outline: none; transition: border-color .2s, box-shadow .2s;
+  resize: none; max-height: 120px; min-height: 44px; line-height: 1.5;
+  background: var(--bg); color: var(--text);
+}
+.chat-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow) }
+.chat-send {
+  background: linear-gradient(135deg, var(--primary), #3b82f6); color: #fff; border: none;
+  border-radius: 50%; width: 44px; height: 44px;
+  cursor: pointer; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .2s;
+  box-shadow: 0 3px 12px var(--primary-glow);
+}
+.chat-send:hover { transform: scale(1.1); box-shadow: 0 5px 18px var(--primary-glow) }
+.chat-hint { font-size: 10px; color: var(--subtle); text-align: center; padding: 3px 14px 0 }
+.online-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid var(--surface);
+}
+.online-dot.online { background: var(--green) }
+.online-dot.offline { background: #cbd5e1 }
+.msg-ava.hidden { visibility: hidden }
+.conv-empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; gap: 10px; color: var(--subtle); padding: 30px; text-align: center;
+}
+.conv-empty-state .cei { font-size: 40px; margin-bottom: 6px }
+.conv-empty-state p { font-size: 13.5px; font-weight: 600; color: var(--muted) }
+
+/* ══════════════════════════════════════════
+   ALERTES (conservé)
+══════════════════════════════════════════ */
+.alert-filters { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap }
+.af-btn {
+  padding: 7px 16px; border-radius: 100px;
+  border: 1.5px solid var(--border); font-size: 12.5px; font-weight: 700;
+  cursor: pointer; background: var(--surface); color: var(--muted);
+  transition: all .18s; font-family: 'Inter', sans-serif;
+}
+.af-btn:hover { border-color: var(--primary); color: var(--primary) }
+.af-btn.active { background: var(--primary); color: #fff; border-color: var(--primary) }
+.alert-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 13px; padding: 16px 18px;
+  display: flex; align-items: flex-start; gap: 14px;
+  margin-bottom: 10px; transition: all .2s;
+  animation: alertIn .35s ease both;
+}
+@keyframes alertIn { from { opacity: 0; transform: translateY(-6px) } to { opacity: 1; transform: translateY(0) } }
+.alert-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px) }
+.alert-card.critical { border-left: 4px solid var(--red); background: rgba(239,68,68,.03) }
+.alert-card.warning { border-left: 4px solid var(--orange); background: rgba(245,158,11,.03) }
+.alert-card.info { border-left: 4px solid var(--primary); background: rgba(37,99,235,.03) }
+.alert-card.ok { border-left: 4px solid var(--green); background: rgba(16,185,129,.03) }
+.alert-ic { font-size: 26px; flex-shrink: 0; margin-top: 2px }
+.alert-body { flex: 1 }
+.alert-title { font-size: 14px; font-weight: 800; color: var(--text); margin-bottom: 3px }
+.alert-detail { font-size: 13px; color: var(--muted) }
+.alert-time { font-size: 11.5px; color: var(--subtle); margin-top: 6px; display: flex; align-items: center; gap: 5px }
+.alert-sev { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 100px; flex-shrink: 0 }
+.sev-critical { background: var(--red-light); color: var(--red); border: 1px solid rgba(239,68,68,.2) }
+.sev-warning { background: var(--orange-light); color: #92400e; border: 1px solid rgba(245,158,11,.2) }
+.sev-info { background: var(--primary-light); color: var(--primary); border: 1px solid rgba(37,99,235,.15) }
+.sev-ok { background: var(--green-light); color: #166534; border: 1px solid rgba(16,185,129,.15) }
+.live-indicator {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--green-light); border: 1px solid rgba(16,185,129,.25);
+  color: #166534; padding: 6px 14px; border-radius: 100px;
+  font-size: 12px; font-weight: 700; margin-bottom: 16px;
+}
+.live-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: pulse 2s ease-in-out infinite }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1) } 50% { opacity: .4; transform: scale(.75) } }
+
+/* ══════════════════════════════════════════
+   ACTIVITY LOG (conservé)
+══════════════════════════════════════════ */
+.log-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--border) }
+.log-item:last-child { border-bottom: none }
+.log-dot-wrap { display: flex; flex-direction: column; align-items: center; gap: 0; padding-top: 5px }
+.log-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; border: 2px solid var(--surface) }
+.ld-add { background: var(--green) }
+.ld-del { background: var(--red) }
+.ld-edit { background: var(--orange) }
+.ld-pass { background: var(--purple) }
+.ld-notif { background: var(--cyan) }
+.log-msg { font-size: 13.5px; font-weight: 600; color: var(--text) }
+.log-who { font-size: 11.5px; color: var(--primary); font-weight: 700; margin-top: 2px }
+.log-time { font-size: 11px; color: var(--subtle); margin-top: 2px }
+.log-empty { text-align: center; padding: 48px; color: var(--subtle); font-size: 14px }
+
+/* ══════════════════════════════════════════
+   SETTINGS (conservé)
+══════════════════════════════════════════ */
+.sett-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px }
+.sett-item {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.sett-item:hover { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow) }
+.sett-lbl { font-size: 13px; font-weight: 800; color: var(--text); margin-bottom: 3px }
+.sett-desc { font-size: 12px; color: var(--muted); margin-bottom: 12px }
+.sett-row { display: flex; align-items: center; gap: 8px }
+.sett-inp {
+  flex: 1; padding: 9px 12px;
+  border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 13.5px; font-family: 'Inter', sans-serif;
+  outline: none; color: var(--text); background: var(--surface);
+  transition: border-color .2s, box-shadow .2s;
+}
+.sett-inp:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow) }
+.sett-unit { font-size: 13px; font-weight: 700; color: var(--subtle); white-space: nowrap }
+.save-bar {
+  background: var(--primary-light); border: 1px solid rgba(37,99,235,.2);
+  border-radius: 12px; padding: 14px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; gap: 10px; flex-wrap: wrap;
+}
+.save-bar p { font-size: 13px; color: var(--primary); font-weight: 600 }
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+.toast-wrap { position: fixed; top: 76px; right: 18px; z-index: 9999; display: flex; flex-direction: column; gap: 8px }
+.toast {
+  padding: 14px 18px; border-radius: 12px;
+  color: #fff; font-size: 13.5px; font-weight: 600;
+  min-width: 280px; max-width: 360px;
+  box-shadow: var(--shadow-lg);
+  animation: slideIn .3s cubic-bezier(.34,1.56,.64,1);
+  display: flex; align-items: center; gap: 9px;
+  position: relative; overflow: hidden;
+}
+.toast::after {
+  content: ''; position: absolute; bottom: 0; left: 0;
+  height: 3px; background: rgba(255,255,255,.35);
+  animation: toastProgress 3.5s linear forwards;
+}
+@keyframes toastProgress { from { width: 100% } to { width: 0% } }
+.toast.success { background: #0d9966 }
+.toast.error { background: #dc2626 }
+.toast.info { background: var(--primary) }
+@keyframes slideIn { from { transform: translateX(110%) scale(.9); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+
+/* ══════════════════════════════════════════
+   ANNONCES (conservé)
+══════════════════════════════════════════ */
+.annonce-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius); padding: 20px 22px;
+  margin-bottom: 12px; transition: all .2s;
+  animation: alertIn .3s ease both;
+}
+.annonce-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px) }
+.annonce-card.pinned { border-left: 4px solid var(--orange) }
+.annonce-hd {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 10px; margin-bottom: 10px;
+}
+.annonce-title { font-size: 15px; font-weight: 800; color: var(--text) }
+.annonce-meta { font-size: 12px; color: var(--subtle); margin-top: 3px; display: flex; align-items: center; gap: 8px }
+.annonce-body { font-size: 13.5px; color: var(--muted); line-height: 1.65 }
+.annonce-badge {
+  font-size: 11px; font-weight: 700; padding: 3px 11px;
+  border-radius: 100px; white-space: nowrap; flex-shrink: 0;
+}
+.badge-info { background: var(--primary-light); color: var(--primary); border: 1px solid rgba(37,99,235,.15) }
+.badge-warn { background: var(--orange-light); color: #92400e; border: 1px solid rgba(245,158,11,.2) }
+.badge-urgent { background: var(--red-light); color: var(--red); border: 1px solid rgba(239,68,68,.2) }
+
+/* ══════════════════════════════════════════
+   STATISTIQUES (AMÉLIORÉES)
+══════════════════════════════════════════ */
+.stat-bar-wrap { margin-bottom: 13px }
+.stat-bar-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px }
+.stat-bar-lbl { font-size: 13px; font-weight: 700; color: var(--text) }
+.stat-bar-right { display: flex; align-items: center; gap: 8px }
+.stat-bar-val { font-size: 13px; font-weight: 800; color: var(--primary) }
+.stat-bar-pct { font-size: 11px; color: var(--subtle) }
+.stat-bar-bg { height: 10px; background: var(--border); border-radius: 100px; overflow: hidden }
+.stat-bar-fill {
+  height: 100%; border-radius: 100px;
+  transition: width .8s cubic-bezier(.4,0,.2,1);
+  background: linear-gradient(90deg, var(--primary), var(--cyan));
+}
+.stat-bar-fill.orange { background: linear-gradient(90deg, var(--orange), #fbbf24) }
+.stat-bar-fill.green { background: linear-gradient(90deg, var(--green), #34d399) }
+.stat-bar-fill.red { background: linear-gradient(90deg, var(--red), #f87171) }
+.stat-bar-fill.cyan { background: linear-gradient(90deg, var(--cyan), #67e8f9) }
+.stat-bar-fill.purple { background: linear-gradient(90deg, var(--purple), #a78bfa) }
+
+.hist-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 14px; margin-bottom: 22px;
+}
+.hist-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--radius); padding: 18px; text-align: center;
+  transition: box-shadow .2s, transform .2s;
+}
+.hist-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px) }
+.hist-card .hc-ic { font-size: 24px; margin-bottom: 8px }
+.hist-card .hc-val { font-size: 28px; font-weight: 900; color: var(--text); margin-bottom: 4px; letter-spacing: -.5px }
+.hist-card .hc-lbl { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px }
+.hist-card .hc-sub { font-size: 10.5px; color: var(--subtle); margin-top: 4px }
+
+.stat-filter-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap }
+.stat-filter-bar .sf-label { font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap }
+.sf-btn {
+  padding: 6px 14px; border-radius: 100px;
+  border: 1.5px solid var(--border); font-size: 12px; font-weight: 700;
+  cursor: pointer; background: var(--surface); color: var(--muted);
+  transition: all .18s; font-family: 'Inter', sans-serif;
+}
+.sf-btn:hover { border-color: var(--primary); color: var(--primary) }
+.sf-btn.active { background: var(--primary); color: #fff; border-color: var(--primary) }
+.date-range-wrap { display: flex; align-items: center; gap: 6px; margin-left: 4px }
+.date-range-wrap input {
+  padding: 5px 11px; border: 1.5px solid var(--border);
+  border-radius: 8px; font-size: 12px; font-family: 'Inter', sans-serif;
+  color: var(--text); background: var(--surface); outline: none;
+  transition: border-color .2s;
+}
+.date-range-wrap input:focus { border-color: var(--primary) }
+.stats-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px }
+.stat-section-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 22px;
+  box-shadow: var(--shadow);
+}
+.stat-section-ttl {
+  font-size: 13.5px; font-weight: 800; color: var(--text);
+  display: flex; align-items: center; gap: 7px; margin-bottom: 16px;
+}
+.trend-chart-wrap { width: 100%; overflow: hidden; border-radius: 8px }
+.trend-chart-wrap svg { width: 100%; display: block }
+
+/* ══════════════════════════════════════════
+   MISC
+══════════════════════════════════════════ */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--subtle) }
+.empty-state .ei { font-size: 44px; margin-bottom: 14px }
+.empty-state p { font-size: 14px; font-weight: 600; color: var(--muted) }
+.loading { text-align: center; padding: 40px; color: var(--subtle); font-size: 14px }
+
+/* ══════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+══════════════════════════════════════════ */
+.kbd-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 500 }
+.kbd-btn {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 7px 13px; font-size: 12px;
+  cursor: pointer; color: var(--muted); box-shadow: var(--shadow);
+  font-family: 'Inter', sans-serif; font-weight: 600;
+  transition: all .2s;
+}
+.kbd-btn:hover { border-color: var(--primary); color: var(--primary) }
+.kbd-modal-body { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px }
+.kbd-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px; gap: 12px;
+}
+.kbd-row:last-child { border-bottom: none }
+.kbd-desc { color: var(--muted); font-weight: 500 }
+.kbd-key {
+  background: var(--bg); border: 1px solid var(--border2);
+  border-radius: 6px; padding: 3px 9px;
+  font-size: 11px; font-weight: 700; color: var(--text);
+  white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.08);
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+@media (max-width: 1200px) {
+  .stats-row { grid-template-columns: 1fr 1fr }
+  .iot-row { grid-template-columns: 1fr 1fr }
+  .hist-row { grid-template-columns: repeat(3, 1fr) }
+}
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed; top: var(--header-h); left: 0;
+    height: calc(100vh - var(--header-h));
+    z-index: 200; transform: translateX(-100%);
+  }
+  .sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,.25) }
+  .sb-overlay.open { display: block }
+  .hamburger { display: flex }
+  .form-grid { grid-template-columns: 1fr 1fr }
+  .sett-grid { grid-template-columns: 1fr }
+  .chat-layout { grid-template-columns: 1fr }
+  .chat-page-wrap { height: calc(100vh - var(--header-h) - 60px) }
+  .chat-sidebar { height: 260px }
+  .stats-grid-2 { grid-template-columns: 1fr }
+  .gsearch-wrap { max-width: 220px }
+}
+@media (max-width: 640px) {
+  .stats-row { grid-template-columns: 1fr 1fr }
+  .iot-row { grid-template-columns: 1fr 1fr }
+  .form-grid { grid-template-columns: 1fr }
+  .main-content { padding: 16px }
+  .notif-type-grid { grid-template-columns: 1fr }
+  .hist-row { grid-template-columns: 1fr 1fr }
+  .gsearch-wrap { display: none }
+  .kbd-wrap { display: none }
+  .pg-title { font-size: 18px }
+}
+
+/* ══════════════════════════════════════════
+   TYPING INDICATOR
+══════════════════════════════════════════ */
+.typing-indicator {
+  display: none; align-items: center; gap: 8px;
+  padding: 8px 14px; font-size: 12px; color: var(--muted); font-weight: 600;
+}
+.typing-indicator.visible { display: flex }
+.typing-dots { display: flex; gap: 3px; align-items: center }
+.typing-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--muted); animation: typingBounce 1.2s infinite ease-in-out;
+}
+.typing-dot:nth-child(2) { animation-delay: .15s }
+.typing-dot:nth-child(3) { animation-delay: .3s }
+@keyframes typingBounce { 0%,80%,100% { transform: scale(.7); opacity: .4 } 40% { transform: scale(1); opacity: 1 } }
+
+/* ══════════════════════════════════════════
+   SCROLL TO BOTTOM BUTTON
+══════════════════════════════════════════ */
+.scroll-bottom-btn {
+  position: absolute; bottom: 80px; right: 18px;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--primary); color: #fff; border: none;
+  cursor: pointer; font-size: 16px;
+  display: none; align-items: center; justify-content: center;
+  box-shadow: 0 4px 14px var(--primary-glow), 0 2px 6px rgba(0,0,0,.15);
+  transition: all .2s; z-index: 10; font-family: 'Inter', sans-serif;
+  animation: fadeUp .2s ease;
+}
+.scroll-bottom-btn.visible { display: flex }
+.scroll-bottom-btn:hover { transform: scale(1.1); background: var(--primary-dark) }
+.scroll-bottom-btn .unread-badge {
+  position: absolute; top: -5px; right: -5px;
+  background: var(--red); color: #fff;
+  font-size: 9px; font-weight: 800;
+  width: 18px; height: 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--surface);
+}
+
+/* ══════════════════════════════════════════
+   PASSWORD STRENGTH
+══════════════════════════════════════════ */
+.pass-strength { margin-top: 6px }
+.pass-strength-bar {
+  height: 4px; background: var(--border); border-radius: 100px;
+  overflow: hidden; margin-bottom: 4px;
+}
+.pass-strength-fill {
+  height: 100%; border-radius: 100px;
+  transition: width .4s ease, background .4s ease;
+  width: 0%;
+}
+.pass-strength-lbl { font-size: 11px; font-weight: 700; color: var(--subtle) }
+
+/* ══════════════════════════════════════════
+   CHAR COUNTER
+══════════════════════════════════════════ */
+.char-counter { font-size: 11px; color: var(--subtle); text-align: right; margin-top: 3px }
+.char-counter.warn { color: var(--orange) }
+.char-counter.over { color: var(--red) }
+
+/* ══════════════════════════════════════════
+   BADGE BOUNCE
+══════════════════════════════════════════ */
+@keyframes badgeBounce { 0% { transform: scale(1) } 30% { transform: scale(1.5) } 60% { transform: scale(.9) } 100% { transform: scale(1) } }
+.badge-bounce { animation: badgeBounce .4s ease }
+
+/* ══════════════════════════════════════════
+   ONLINE DOT IN TABLE
+══════════════════════════════════════════ */
+.tbl-online { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: middle }
+.tbl-online.on { background: var(--green) }
+.tbl-online.off { background: var(--border2) }
+
+/* ══════════════════════════════════════════
+   UNREAD MESSAGES SEPARATOR
+══════════════════════════════════════════ */
+.msg-unread-sep {
+  text-align: center; margin: 8px 0; position: relative;
+}
+.msg-unread-sep span {
+  background: #fef3c7; color: #92400e; padding: 3px 14px;
+  font-size: 11px; border-radius: 100px; border: 1px solid #fde68a;
+  position: relative; z-index: 1; font-weight: 700;
+}
+[data-theme="dark"] .msg-unread-sep span { background: rgba(245,158,11,.15); color: #fcd34d; border-color: rgba(245,158,11,.3) }
+
+/* ══════════════════════════════════════════
+   CHAT EMPTY STATE
+══════════════════════════════════════════ */
+.chat-empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; height: 100%; gap: 14px; padding: 40px;
+}
+.chat-empty-icon {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: var(--primary-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px;
+}
+.chat-empty-title { font-size: 15px; font-weight: 800; color: var(--text); text-align: center }
+.chat-empty-sub { font-size: 13px; color: var(--muted); text-align: center; max-width: 220px; line-height: 1.55 }
+.toast-icon { font-size: 17px; flex-shrink: 0 }
+</style>
+</head>
+<body>
+
+<script>
+(function(){
+  var r=sessionStorage.getItem("role"), u=sessionStorage.getItem("user");
+  if(!u){alert("❌ Vous devez vous connecter.");window.location.href="login.html";return}
+  if(r!=="admin"){alert("⛔ Accès réservé aux administrateurs.");window.location.href="dashboard.html"}
+})();
+</script>
+
+<div class="session-warn-bar" id="sessionWarn">
+  ⏱️ Session inactive — déconnexion dans <span id="sessionCountdown">60</span>s
+  <button class="btn btn-sm" style="background:#fff;color:#7f1d1d;font-weight:700" onclick="resetSessionTimer()">Rester connecté</button>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- MODAL : MODIFIER RÔLE -->
+<div class="overlay" id="mRole">
+  <div class="modal">
+    <h4>✏️ Modifier le rôle</h4>
+    <p class="m-sub" id="mRoleEmail">—</p>
+    <div class="m-field"><label>Nouveau rôle</label>
+      <select id="mRoleSel">
+        <option value="user">👤 Utilisateur</option>
+        <option value="admin">🛡️ Administrateur</option>
+      </select>
+    </div>
+    <div class="m-actions">
+      <button class="btn-cancel" onclick="closeM('mRole')">Annuler</button>
+      <button class="btn btn-primary btn-sm" onclick="saveRole()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL : MOT DE PASSE -->
+<div class="overlay" id="mPass">
+  <div class="modal">
+    <h4>🔑 Changer le mot de passe</h4>
+    <p class="m-sub" id="mPassEmail">—</p>
+    <div class="m-field"><label>Nouveau mot de passe</label>
+      <input type="text" id="mPassVal" placeholder="Nouveau code d'accès">
+    </div>
+    <div class="m-actions">
+      <button class="btn-cancel" onclick="closeM('mPass')">Annuler</button>
+      <button class="btn btn-primary btn-sm" onclick="savePass()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL : CRÉER GROUPE -->
+<div class="overlay" id="mGrp">
+  <div class="modal">
+    <h4>➕ Nouveau groupe</h4>
+    <p class="m-sub">Créer un groupe de chat entre administrateurs</p>
+    <div class="m-field"><label>Nom du groupe</label>
+      <input type="text" id="grpName" placeholder="ex : Équipe pédagogique">
+    </div>
+    <div class="m-field"><label>Membres</label>
+      <div id="membersList" style="display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto;padding:8px;background:var(--bg);border-radius:9px;border:1.5px solid var(--border)">
+        <div style="font-size:13px;color:var(--subtle)">Chargement…</div>
+      </div>
+    </div>
+    <div class="m-actions">
+      <button class="btn-cancel" onclick="closeM('mGrp')">Annuler</button>
+      <button class="btn btn-primary btn-sm" onclick="createGroup()">✅ Créer le groupe</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL : RACCOURCIS CLAVIER -->
+<div class="overlay" id="mKbd">
+  <div class="modal" style="max-width:520px">
+    <h4>⌨️ Raccourcis clavier</h4>
+    <p class="m-sub">Naviguez rapidement dans l'application</p>
+    <div class="kbd-modal-body">
+      <div class="kbd-row"><span class="kbd-desc">Vue d'ensemble</span><span class="kbd-key">G 1</span></div>
+      <div class="kbd-row"><span class="kbd-desc">Liste comptes</span><span class="kbd-key">G 2</span></div>
+      <div class="kbd-row"><span class="kbd-desc">Ajouter compte</span><span class="kbd-key">G 3</span></div>
+      <div class="kbd-row"><span class="kbd-desc">Notifications</span><span class="kbd-key">G 4</span></div>
+      <div class="kbd-row"><span class="kbd-desc">Messagerie</span><span class="kbd-key">G 5</span></div>
+      <div class="kbd-row"><span class="kbd-desc">Annonces</span><span class="kbd-key">G 6</span></div>
+      <div class="kbd-row"><span class="kbd-desc">Statistiques</span><span class="kbd-key">G 7</span></div>
+      <div class="kbd-row"><span class="kbd-desc">Alertes</span><span class="kbd-key">G 8</span></div>
+      <div class="kbd-row"><span class="kbd-desc">Journal</span><span class="kbd-key">G 9</span></div>
+      <div class="kbd-row"><span class="kbd-desc">Paramètres</span><span class="kbd-key">G 0</span></div>
+      <div class="kbd-row"><span class="kbd-desc">Recherche globale</span><span class="kbd-key">Ctrl + K</span></div>
+      <div class="kbd-row"><span class="kbd-desc">Mode sombre</span><span class="kbd-key">Ctrl + D</span></div>
+      <div class="kbd-row"><span class="kbd-desc">Aide raccourcis</span><span class="kbd-key">?</span></div>
+      <div class="kbd-row"><span class="kbd-desc">Fermer fenêtre</span><span class="kbd-key">Échap</span></div>
+    </div>
+    <div class="m-actions">
+      <button class="btn btn-primary btn-sm" onclick="closeM('mKbd')">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL : RAPPORT HEBDO -->
+<div class="overlay" id="mReport">
+  <div class="modal">
+    <h4>📊 Rapport hebdomadaire</h4>
+    <p class="m-sub">Envoyer un résumé de la semaine par email</p>
+    <div class="m-field"><label>Destinataires</label>
+      <select id="reportTarget">
+        <option value="admins">🛡️ Admins seulement</option>
+        <option value="all">👥 Tous les utilisateurs</option>
+      </select>
+    </div>
+    <div id="reportPreview" style="background:var(--bg);border-radius:10px;padding:14px;font-size:13px;color:var(--muted);margin-bottom:4px;line-height:1.8;border:1px solid var(--border)">Génération du rapport…</div>
+    <div class="m-actions">
+      <button class="btn-cancel" onclick="closeM('mReport')">Annuler</button>
+      <button class="btn btn-primary btn-sm" id="sendReportBtn" onclick="sendWeeklyReport()">📤 Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL : VERIFICATION PASSWORD POUR CHANGEMENT DE COMPTE (AJOUT) -->
+<div class="overlay" id="mVerifySwitch">
+  <div class="modal">
+    <h4>🔐 Vérification requise</h4>
+    <p class="m-sub" id="verifyTargetEmail">—</p>
+    <div class="m-field"><label>Mot de passe du compte cible</label>
+      <input type="password" id="verifyPassInput" placeholder="Mot de passe">
+    </div>
+    <div class="m-actions">
+      <button class="btn-cancel" onclick="closeM('mVerifySwitch')">Annuler</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmSwitchAccount()">✅ Vérifier et basculer</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="h-brand">
+    <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()">☰</button>
+    <div class="h-icon">🎓</div>
+    <div>
+      <div class="h-title">Smart Classroom</div>
+      <div class="h-sub">Administration</div>
+    </div>
+  </div>
+
+  <div class="gsearch-wrap">
+    <span class="gsearch-ic">🔍</span>
+    <input class="gsearch-inp" type="text" id="gsearchInp" placeholder="Rechercher… (Ctrl+K)"
+      oninput="globalSearch(this.value)" onfocus="globalSearch(this.value)" autocomplete="off">
+    <div class="gsearch-results" id="gsearchResults"></div>
+  </div>
+
+  <div class="h-right">
+    <button class="h-btn" onclick="toggleDark()" id="darkBtn" title="Mode sombre (Ctrl+D)">🌙</button>
+    <button class="h-btn" onclick="openReportModal()" title="Rapport hebdomadaire">📊</button>
+    <span class="h-btn" id="hEmail" style="cursor:default;font-size:12px">—</span>
+    <a href="historique.html" class="h-btn" title="Historique">📜 Historique</a>
+    <button class="h-btn h-logout" onclick="logout()" title="Déconnexion">🚪</button>
+  </div>
+</header>
+
+<div class="sb-overlay" id="sbOverlay" onclick="toggleSidebar()"></div>
+
+<div class="app-body">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="mainSidebar">
+  <div class="sb-section">
+    <div class="sb-label">Principal</div>
+    <button class="nav-item active" id="nav-overview"  onclick="sp('overview')"><span class="nav-ic">📊</span>Vue d'ensemble</button>
+    <button class="nav-item"        id="nav-list"      onclick="sp('list')"><span class="nav-ic">👥</span>Comptes<span class="n-badge nb-blue" id="sbCount">0</span></button>
+    <button class="nav-item"        id="nav-add"       onclick="sp('add')"><span class="nav-ic">➕</span>Ajouter un compte</button>
+  </div>
+  <div class="sb-div"></div>
+  <div class="sb-section">
+    <div class="sb-label">Communication</div>
+    <button class="nav-item" id="nav-notif"    onclick="sp('notif')"><span class="nav-ic">📧</span>Notifications</button>
+    <button class="nav-item" id="nav-chat"     onclick="sp('chat')"><span class="nav-ic">💬</span>Messagerie<span class="n-badge nb-blue" id="sbChatBadge" style="display:none">0</span></button>
+    <button class="nav-item" id="nav-annonces" onclick="sp('annonces')"><span class="nav-ic">📢</span>Annonces</button>
+  </div>
+  <div class="sb-div"></div>
+  <div class="sb-section">
+    <div class="sb-label">Supervision</div>
+    <button class="nav-item" id="nav-stats"    onclick="sp('stats')"><span class="nav-ic">📈</span>Statistiques</button>
+    <button class="nav-item" id="nav-alerts"   onclick="sp('alerts')"><span class="nav-ic">🚨</span>Alertes<span class="n-badge nb-red" id="sbAlerts" style="display:none">0</span></button>
+    <button class="nav-item" id="nav-activity" onclick="sp('activity')"><span class="nav-ic">📜</span>Journal<span class="n-badge nb-amber" id="sbActivity">0</span></button>
+  </div>
+  <div class="sb-div"></div>
+  <div class="sb-section">
+    <div class="sb-label">Système</div>
+    <button class="nav-item" id="nav-settings" onclick="sp('settings')"><span class="nav-ic">⚙️</span>Paramètres</button>
+  </div>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="ava" id="sbAva">A</div>
+      <div>
+        <div class="ava-email" id="sbEmail">—</div>
+        <div class="ava-role">Administrateur</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content" id="mainContent">
+
+<!-- ▸ VUE D'ENSEMBLE -->
+<div class="page active" id="page-overview">
+  <div class="pg-title">📊 Vue d'ensemble</div>
+  <div class="pg-sub">Données en direct de la salle intelligente</div>
+
+  <!-- IoT Live -->
+  <div class="iot-row">
+    <div class="iot-card card-orange">
+      <div class="iot-badge" style="background:var(--orange)"></div>
+      <div class="iot-label">🌡️ Température</div>
+      <div class="iot-value-row">
+        <span class="iot-value" id="iot-temp">—</span>
+        <span class="iot-unit">°C</span>
+      </div>
+      <div class="iot-bar-bg"><div class="iot-bar-fill" id="iot-temp-bar" style="width:0%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+      <div class="iot-status" id="iot-temp-status">
+        <span class="iot-pulse" style="background:var(--subtle)"></span><span>En attente…</span>
+      </div>
+    </div>
+    <div class="iot-card card-blue">
+      <div class="iot-badge" style="background:var(--primary)"></div>
+      <div class="iot-label">💧 Humidité</div>
+      <div class="iot-value-row">
+        <span class="iot-value" id="iot-hum">—</span>
+        <span class="iot-unit">%</span>
+      </div>
+      <div class="iot-bar-bg"><div class="iot-bar-fill" id="iot-hum-bar" style="width:0%;background:linear-gradient(90deg,#2563eb,#06b6d4)"></div></div>
+      <div class="iot-status" id="iot-hum-status">
+        <span class="iot-pulse" style="background:var(--subtle)"></span><span>En attente…</span>
+      </div>
+    </div>
+    <div class="iot-card card-green">
+      <div class="iot-badge" style="background:var(--green)"></div>
+      <div class="iot-label">👥 Présence</div>
+      <div class="iot-value-row">
+        <span class="iot-value" id="iot-pres">—</span>
+        <span class="iot-unit">pers.</span>
+      </div>
+      <div class="iot-bar-bg"><div class="iot-bar-fill" id="iot-pres-bar" style="width:0%;background:linear-gradient(90deg,#10b981,#34d399)"></div></div>
+      <div class="iot-status" id="iot-pres-status">
+        <span class="iot-pulse" style="background:var(--subtle)"></span><span>En attente…</span>
+      </div>
+    </div>
+    <div class="iot-card card-red">
+      <div class="iot-badge" style="background:var(--red)"></div>
+      <div class="iot-label">⚡ Décision IA</div>
+      <div class="iot-ai" id="iot-dec">En attente de données…</div>
+      <div class="iot-status" style="margin-top:auto">
+        <span class="iot-pulse" id="iot-live-dot" style="background:var(--green)"></span>
+        <span id="iot-live-label">Connexion…</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="s-card"><div class="s-ic ic-b">👥</div><div><div class="s-num" id="stTotal">—</div><div class="s-lbl">Total comptes</div></div></div>
+    <div class="s-card"><div class="s-ic ic-o">🛡️</div><div><div class="s-num" id="stAdmins">—</div><div class="s-lbl">Administrateurs</div></div></div>
+    <div class="s-card"><div class="s-ic ic-g">👤</div><div><div class="s-num" id="stUsers">—</div><div class="s-lbl">Utilisateurs</div></div></div>
+    <div class="s-card"><div class="s-ic ic-r">🚨</div><div><div class="s-num" id="stAlerts">0</div><div class="s-lbl">Alertes actives</div></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-ttl">👥 Aperçu des comptes</div>
+      <button class="btn btn-secondary btn-sm" onclick="sp('list')">Voir tous →</button>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>Compte</th><th>Rôle</th><th>Actions rapides</th></tr></thead>
+      <tbody id="prevList"><tr><td colspan="4" class="tbl-empty">Chargement…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ▸ LISTE -->
+<div class="page" id="page-list">
+  <div class="pg-title">👥 Liste des comptes</div>
+  <div class="pg-sub"><span id="totalCount">0</span> compte(s) enregistré(s)</div>
+  <div class="card">
+    <div class="tbl-toolbar">
+      <div class="srch"><span class="srch-ic">🔍</span><input type="text" id="searchBar" placeholder="Rechercher par email…" oninput="filterAndRender()"></div>
+      <select class="filter-sel" id="roleFilter" onchange="filterAndRender()">
+        <option value="">Tous les rôles</option>
+        <option value="admin">🛡️ Admins</option>
+        <option value="user">👤 Users</option>
+      </select>
+      <button class="btn btn-success btn-sm" onclick="exportUsersCSV()">⬇️ CSV</button>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>Compte</th><th>Rôle</th><th>Dernière connexion</th><th>Actions</th></tr></thead>
+      <tbody id="userTbody"><tr><td colspan="5" class="tbl-empty">Chargement…</td></tr></tbody>
+    </table>
+    <div class="pagi">
+      <div class="pg-info" id="pgInfo">—</div>
+      <div class="pg-btns" id="pgBtns"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ▸ AJOUTER -->
+<div class="page" id="page-add">
+  <div class="pg-title">➕ Ajouter un compte</div>
+  <div class="pg-sub">Créez un nouvel accès avec envoi automatique des identifiants par email</div>
+  <div class="card">
+    <div class="note">📧 Un email avec les identifiants sera envoyé automatiquement dès la création du compte.</div>
+    <div class="form-grid">
+      <div class="fg">
+        <label>Adresse email</label>
+        <input type="email" id="nEmail" placeholder="exemple@email.com">
+      </div>
+      <div class="fg">
+        <label>Mot de passe</label>
+        <div class="pw-wrap">
+          <input type="text" id="nPass" placeholder="Code d'accès" oninput="updatePassStrength(this.value)">
+          <button class="eye-btn" onclick="togglePassAdd()">👁️</button>
+        </div>
+        <div class="pass-strength" id="passStrengthWrap" style="display:none">
+          <div class="pass-strength-bar"><div class="pass-strength-fill" id="passStrengthFill"></div></div>
+          <div class="pass-strength-lbl" id="passStrengthLbl"></div>
+        </div>
+        <button class="btn-gen" onclick="generatePassword()">⚡ Générer code numérique (8 chiffres)</button>
+        <span class="hint">Le code généré est purement numérique.</span>
+      </div>
+      <div class="fg">
+        <label>Rôle</label>
+        <select id="nRole">
+          <option value="user">👤 Utilisateur</option>
+          <option value="admin">🛡️ Administrateur</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" id="addBtn" onclick="addUser()">✅ Créer et envoyer l'email</button>
+      <button class="btn btn-secondary" onclick="clearAddForm()">Réinitialiser</button>
+      <button class="btn btn-secondary" onclick="massResetPasswords()" style="margin-left:auto">🔄 Réinitialiser les mdp d'un groupe…</button>
+    </div>
+  </div>
+</div>
+
+<!-- ▸ NOTIFICATIONS EMAIL -->
+<div class="page" id="page-notif">
+  <div class="pg-title">📧 Notifications email</div>
+  <div class="pg-sub">Envoyez des messages email à vos utilisateurs</div>
+  <div class="card">
+    <div class="card-hd"><div class="card-ttl">Destinataires</div></div>
+    <div class="notif-type-grid">
+      <button class="notif-type-btn selected" id="nt-all"    onclick="selectNType('all')"><span class="nb-icon">👥</span><span class="nb-lbl">Tous</span><span class="nb-cnt" id="nc-all">0</span></button>
+      <button class="notif-type-btn"           id="nt-admins" onclick="selectNType('admins')"><span class="nb-icon">🛡️</span><span class="nb-lbl">Admins</span><span class="nb-cnt" id="nc-admins">0</span></button>
+      <button class="notif-type-btn"           id="nt-users"  onclick="selectNType('users')"><span class="nb-icon">👤</span><span class="nb-lbl">Utilisateurs</span><span class="nb-cnt" id="nc-users">0</span></button>
+      <button class="notif-type-btn"           id="nt-one"    onclick="selectNType('one')"><span class="nb-icon">🎯</span><span class="nb-lbl">Spécifique</span><span class="nb-cnt">ciblé</span></button>
+    </div>
+    <div class="fg" id="oneEmailWrap" style="display:none;margin-bottom:14px">
+      <label>Email du destinataire</label>
+      <select id="oneEmailSel" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13.5px;font-family:'Inter',sans-serif;outline:none;color:var(--text);background:var(--surface)">
+        <option value="">— Choisir un utilisateur —</option>
+      </select>
+    </div>
+    <div class="fg" style="margin-bottom:13px"><label>Objet</label><input type="text" id="nSubject" placeholder="ex : Maintenance prévue ce soir"></div>
+    <div class="fg" style="margin-bottom:20px">
+      <label>Message</label>
+      <textarea id="nMessage" placeholder="Rédigez votre message ici…" style="min-height:110px" oninput="updateCharCounter('nMessage','nMsgCounter',500)"></textarea>
+      <div class="char-counter" id="nMsgCounter">0 / 500</div>
+    </div>
+    <button class="btn btn-primary" id="sendNotifBtn" onclick="sendNotification()">📤 Envoyer la notification</button>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-ttl">📨 Historique des envois</div>
+      <button class="btn btn-secondary btn-sm" onclick="clearNotifHistory()">🗑️ Effacer</button>
+    </div>
+    <div id="notifHistory"><div class="log-empty">Aucune notification envoyée pour l'instant.</div></div>
+  </div>
+</div>
+
+<!-- ▸ MESSAGERIE -->
+<div class="page" id="page-chat">
+  <div class="chat-page-wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div class="pg-title" style="margin-bottom:2px">💬 Messagerie</div>
+        <div style="font-size:12px;color:var(--muted)">Connecté en tant que <strong id="chatMeLabel">—</strong></div>
+      </div>
+    </div>
+    <div class="chat-layout">
+      <!-- Sidebar conversations -->
+      <div class="chat-sidebar">
+        <div class="chat-sidebar-header">
+          <div class="chat-sidebar-top">
+            <div class="chat-sidebar-title">Messages</div>
+            <button class="chat-new-btn" onclick="openM('mGrp');loadAdminsForGroup()" title="Nouveau groupe">✏️</button>
+          </div>
+          <div class="chat-sidebar-search">
+            <span class="chat-sidebar-search-ic">🔍</span>
+            <input type="text" id="convSearchInp" placeholder="Rechercher une conversation…" oninput="filterConversations(this.value)">
+          </div>
+        </div>
+        <!-- Filtre par compte (avec vérification mot de passe) -->
+        <div class="chat-account-filter">
+          <label>👁️ Voir les conversations de</label>
+          <select class="chat-account-sel" id="chatAccountSel" onchange="onChatAccountSelect()">
+            <option value="">— Mon compte (par défaut) —</option>
+          </select>
+        </div>
+        <div class="chat-viewing-banner" id="chatViewingBanner">
+          <span>👁️</span><span id="chatViewingLabel">Vue admin</span>
+          <button onclick="resetChatAccount()" style="margin-left:auto;background:none;border:none;color:inherit;cursor:pointer;font-size:11px;font-weight:700;text-decoration:underline">Quitter</button>
+        </div>
+        <div class="chat-tabs">
+          <button class="chat-tab active" id="tab-groups" onclick="switchChatTab('groups')">Groupes</button>
+          <button class="chat-tab"        id="tab-dms"    onclick="switchChatTab('dms')">Messages privés</button>
+        </div>
+        <div class="groups-list" id="groupsList">
+          <div class="conv-empty-state"><div class="cei">💬</div><p>Aucun groupe.</p></div>
+        </div>
+        <div class="dm-list" id="dmList" style="display:none">
+          <div class="conv-empty-state"><div class="cei">✉️</div><p>Chargement…</p></div>
+        </div>
+      </div>
+      <!-- Zone messages -->
+      <div class="chat-main" id="chatMain">
+        <div class="chat-hd" id="chatHd" style="display:none">
+          <div class="chat-hd-left">
+            <div class="chat-hd-ava" id="chatHdAva">?</div>
+            <div>
+              <div class="chat-hd-name" id="chatHdName">—</div>
+              <div class="chat-hd-members" id="chatHdMembers">—</div>
+            </div>
+          </div>
+          <div class="chat-hd-actions">
+            <button class="chat-hd-btn" onclick="toggleChatSearch()" title="Rechercher">🔍</button>
+            <button class="chat-hd-btn" onclick="forceScrollBottom()" title="Bas">⬇</button>
+          </div>
+        </div>
+        <div class="chat-search-bar" id="chatSearchBar">
+          <input class="chat-search-inp" type="text" id="chatSearchInp" placeholder="Rechercher dans les messages…" oninput="searchMessages(this.value)">
+          <button class="chat-search-close" onclick="closeChatSearch()">✕</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-empty-state">
+            <div class="chat-empty-icon">💬</div>
+            <div class="chat-empty-title">Choisissez une conversation</div>
+            <div class="chat-empty-sub">Sélectionnez un groupe ou un message direct pour commencer</div>
+          </div>
+        </div>
+        <button class="scroll-bottom-btn" id="scrollBottomBtn" onclick="forceScrollBottom()" title="Aller en bas">↓</button>
+        <div class="typing-indicator" id="typingIndicator">
+          <div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+          <span id="typingName"></span> est en train d'écrire…
+        </div>
+        <div id="chatInputRow" class="chat-input-area" style="display:none">
+          <div class="chat-input-row">
+            <textarea class="chat-input" id="chatInput" placeholder="Aa" rows="1" onkeydown="handleChatKey(event)" oninput="autoResize(this);onChatTyping()"></textarea>
+            <button class="chat-send" onclick="sendMsg()" title="Envoyer">➤</button>
+          </div>
+          <div class="chat-hint">Entrée pour envoyer · Maj+Entrée pour saut de ligne</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ▸ ANNONCES -->
+<div class="page" id="page-annonces">
+  <div class="pg-title">📢 Annonces</div>
+  <div class="pg-sub">Publiez des messages visibles par tous les utilisateurs</div>
+  <div class="card">
+    <div class="card-hd"><div class="card-ttl">✍️ Nouvelle annonce</div></div>
+    <div class="fg" style="margin-bottom:13px"><label>Titre</label><input type="text" id="ancTitle" placeholder="ex : Maintenance programmée vendredi"></div>
+    <div class="fg" style="margin-bottom:13px"><label>Message</label><textarea id="ancBody" placeholder="Rédigez votre annonce…" style="min-height:90px"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
+      <div class="fg"><label>Type</label>
+        <select id="ancType">
+          <option value="info">ℹ️ Information</option>
+          <option value="warn">⚠️ Avertissement</option>
+          <option value="urgent">🚨 Urgent</option>
+        </select>
+      </div>
+      <div class="fg"><label>Options</label>
+        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;cursor:pointer;font-size:13.5px;background:var(--surface);transition:border-color .2s">
+          <input type="checkbox" id="ancPinned"> 📌 Épingler en haut
+        </label>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="ancBtn" onclick="publishAnnonce()">📢 Publier l'annonce</button>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-ttl">📋 Annonces publiées</div>
+      <button class="btn btn-secondary btn-sm" onclick="loadAnnonces()">🔄 Actualiser</button>
+    </div>
+    <div id="annoncesList"><div class="log-empty">Chargement…</div></div>
+  </div>
+</div>
+
+<!-- ▸ STATISTIQUES (AMÉLIORÉES) -->
+<div class="page" id="page-stats">
+  <div class="pg-title">📈 Statistiques</div>
+  <div class="pg-sub">Analyse des données historiques de la salle</div>
+  <div class="stat-filter-bar">
+    <span class="sf-label">Période :</span>
+    <button class="sf-btn" id="sf-7"  onclick="setStatFilter(7)">7 jours</button>
+    <button class="sf-btn" id="sf-30" onclick="setStatFilter(30)">30 jours</button>
+    <button class="sf-btn active" id="sf-0" onclick="setStatFilter(0)">Tout</button>
+    <div class="date-range-wrap">
+      <input type="date" id="sfDateFrom" onchange="setStatFilter(-1)">
+      <span style="font-size:12px;color:var(--subtle)">→</span>
+      <input type="date" id="sfDateTo" onchange="setStatFilter(-1)">
+    </div>
+    <button class="btn btn-success btn-sm" onclick="exportStatsCSV()">⬇️ CSV</button>
+    <button class="btn btn-secondary btn-sm" onclick="loadStats()" style="margin-left:auto">🔄</button>
+  </div>
+
+  <div class="hist-row" id="statSummaryRow">
+    <div class="hist-card"><div class="hc-ic">📦</div><div class="hc-val" id="st-entries">—</div><div class="hc-lbl">Entrées</div><div class="hc-sub">Historique</div></div>
+    <div class="hist-card"><div class="hc-ic">🌡️</div><div class="hc-val" id="st-avgTemp">—</div><div class="hc-lbl">Temp. moy.</div><div class="hc-sub" id="st-tempRange">—</div></div>
+    <div class="hist-card"><div class="hc-ic">💧</div><div class="hc-val" id="st-avgHum">—</div><div class="hc-lbl">Humidité moy.</div><div class="hc-sub" id="st-humRange">—</div></div>
+    <div class="hist-card"><div class="hc-ic">👥</div><div class="hc-val" id="st-avgPers">—</div><div class="hc-lbl">Présence moy.</div><div class="hc-sub" id="st-persRange">—</div></div>
+    <div class="hist-card"><div class="hc-ic">🔥</div><div class="hc-val" id="st-maxTemp">—</div><div class="hc-lbl">Temp. max.</div><div class="hc-sub">Enregistrée</div></div>
+    <div class="hist-card"><div class="hc-ic">❄️</div><div class="hc-val" id="st-minTemp">—</div><div class="hc-lbl">Temp. min.</div><div class="hc-sub">Enregistrée</div></div>
+  </div>
+
+  <div class="stats-grid-2" style="margin-bottom:18px">
+    <div class="stat-section-card">
+      <div class="stat-section-ttl">📉 Évolution de la température</div>
+      <div class="trend-chart-wrap" id="trendTempWrap"><div class="loading">Chargement…</div></div>
+    </div>
+    <div class="stat-section-card">
+      <div class="stat-section-ttl">📈 Évolution de l'humidité</div>
+      <div class="trend-chart-wrap" id="trendHumWrap"><div class="loading">Chargement…</div></div>
+    </div>
+  </div>
+
+  <div class="stats-grid-2">
+    <div class="stat-section-card">
+      <div class="stat-section-ttl">🌡️ Distribution températures</div>
+      <div id="tempBars"><div class="loading">Chargement…</div></div>
+    </div>
+    <div class="stat-section-card">
+      <div class="stat-section-ttl">💧 Distribution humidité</div>
+      <div id="humBars"><div class="loading">Chargement…</div></div>
+    </div>
+  </div>
+  <div class="stats-grid-2" style="margin-top:18px">
+    <div class="stat-section-card">
+      <div class="stat-section-ttl">✅ Décisions prises</div>
+      <div id="decisionBars"><div class="loading">Chargement…</div></div>
+    </div>
+    <div class="stat-section-card">
+      <div class="stat-section-ttl">👥 Présence moy. par décision</div>
+      <div id="presenceBars"><div class="loading">Chargement…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ▸ ALERTES -->
+<div class="page" id="page-alerts">
+  <div class="pg-title">🚨 Alertes temps réel</div>
+  <div class="pg-sub">Surveillance automatique des seuils définis</div>
+  <div class="live-indicator"><span class="live-dot"></span> Surveillance active</div>
+  <div class="alert-filters">
+    <button class="af-btn active" id="af-all"      onclick="filterAlerts('all')">Toutes</button>
+    <button class="af-btn"        id="af-critical" onclick="filterAlerts('critical')">🔴 Critiques</button>
+    <button class="af-btn"        id="af-warning"  onclick="filterAlerts('warning')">🟠 Avertissements</button>
+    <button class="af-btn"        id="af-ok"       onclick="filterAlerts('ok')">🟢 Normales</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+    <button class="btn btn-secondary btn-sm" onclick="clearAlerts()">🗑️ Effacer</button>
+    <button class="btn btn-secondary btn-sm" onclick="markAllRead()">✅ Tout marquer lu</button>
+    <button class="btn btn-success btn-sm" onclick="exportAlertsCSV()">⬇️ CSV</button>
+  </div>
+  <div id="alertsList">
+    <div class="empty-state"><div class="ei">🟢</div><p>Aucune alerte. Système nominal.</p></div>
+  </div>
+</div>
+
+<!-- ▸ JOURNAL -->
+<div class="page" id="page-activity">
+  <div class="pg-title">📜 Journal d'activité</div>
+  <div class="pg-sub">Historique persistant de toutes les actions administratives</div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-ttl">Actions enregistrées</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-success btn-sm" onclick="exportActivityCSV()">⬇️ CSV</button>
+        <button class="btn btn-secondary btn-sm" onclick="clearActivityLog()">🗑️ Effacer</button>
+      </div>
+    </div>
+    <div id="activityLog"><div class="log-empty">Chargement…</div></div>
+  </div>
+</div>
+
+<!-- ▸ PARAMÈTRES -->
+<div class="page" id="page-settings">
+  <div class="pg-title">⚙️ Paramètres système</div>
+  <div class="pg-sub">Configurez les seuils et comportements du système (Firebase)</div>
+  <div class="save-bar">
+    <p>💡 Ces paramètres sont lus en temps réel par le dashboard et le système d'alertes.</p>
+    <button class="btn btn-primary btn-sm" onclick="saveSettings()">💾 Enregistrer les paramètres</button>
+  </div>
+  <div class="sett-grid">
+    <div class="sett-item"><div class="sett-lbl">🌡️ Température maximale</div><div class="sett-desc">Alerte critique si dépassé</div><div class="sett-row"><input class="sett-inp" type="number" id="s-tMax" placeholder="ex: 30"><span class="sett-unit">°C</span></div></div>
+    <div class="sett-item"><div class="sett-lbl">🌡️ Température minimale</div><div class="sett-desc">Alerte si trop basse</div><div class="sett-row"><input class="sett-inp" type="number" id="s-tMin" placeholder="ex: 15"><span class="sett-unit">°C</span></div></div>
+    <div class="sett-item"><div class="sett-lbl">💧 Humidité maximale</div><div class="sett-desc">Alerte si trop élevée</div><div class="sett-row"><input class="sett-inp" type="number" id="s-hMax" placeholder="ex: 70"><span class="sett-unit">%</span></div></div>
+    <div class="sett-item"><div class="sett-lbl">⏱️ Timeout inactivité</div><div class="sett-desc">Effacement auto des données IoT</div><div class="sett-row"><input class="sett-inp" type="number" id="s-timeout" placeholder="ex: 120"><span class="sett-unit">sec</span></div></div>
+    <div class="sett-item"><div class="sett-lbl">👥 Capacité maximale</div><div class="sett-desc">Alerte si dépassé</div><div class="sett-row"><input class="sett-inp" type="number" id="s-maxP" placeholder="ex: 30"><span class="sett-unit">pers.</span></div></div>
+    <div class="sett-item"><div class="sett-lbl">🌀 Ventilation auto</div><div class="sett-desc">Seuil d'activation</div><div class="sett-row"><input class="sett-inp" type="number" id="s-ventA" placeholder="ex: 28"><span class="sett-unit">°C</span></div></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- Bouton aide raccourcis -->
+<div class="kbd-wrap">
+  <button class="kbd-btn" onclick="openM('mKbd')" title="Raccourcis clavier (?)">⌨️ Raccourcis</button>
+</div>
+
+<script>
+/* ══════════════════════════════
+   FIREBASE
+══════════════════════════════ */
+var firebaseConfig = {
+  apiKey: "AIzaSyCnTQ4wiPX6_N6EZ9ew53jl3VXIVmetrYQ",
+  authDomain: "smartclassroomai-f4ffe.firebaseapp.com",
+  databaseURL: "https://smartclassroomai-f4ffe-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "smartclassroomai-f4ffe",
+  storageBucket: "smartclassroomai-f4ffe.firebasestorage.app",
+  messagingSenderId: "775061606543",
+  appId: "1:775061606543:web:0f0b5c9dd8ebcf61aae0fa"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+var db=firebase.firestore(), rtdb=firebase.database();
+var EJS_SVC="service_hqjrt9c", EJS_TPL="template_j3h72cb", EJS_KEY="MTMR3YPYQ6FVlZT2O";
+emailjs.init(EJS_KEY);
+
+/* ══════════════════════════════
+   STATE
+══════════════════════════════ */
+var ME=sessionStorage.getItem("user")||"";
+var viewAs=ME; /* compte dont on visualise les conversations (admin peut switcher) */
+var pendingSwitchEmail=null; /* stocke l'email cible avant vérif */
+var allUsers=[]; var editDocId=null, editEmail=null;
+var curPage=1, PER=8;
+var notifType="all"; var notifHist=[];
+var alertsData=[], alertFilter="all";
+var activeGrpId=null, chatUnsub=null, grpUnsub=null;
+var sysConfig={}; var statFilterDays=0;
+var chatTabActive="groups";
+var scrollListenerSetup=false;
+var darkMode=localStorage.getItem("darkMode")==="1";
+var lastIotData=null; var unreadMsgCount=0;
+var cachedStats=null;
+var activityLogCache=[];
+
+/* ══════════════════════════════
+   INIT
+══════════════════════════════ */
+document.getElementById("hEmail").textContent=ME;
+document.getElementById("sbEmail").textContent=ME;
+document.getElementById("sbAva").textContent=ME.charAt(0).toUpperCase();
+document.getElementById("chatMeLabel").textContent=ME;
+if(darkMode) document.documentElement.setAttribute("data-theme","dark");
+updateDarkBtn();
+
+/* Enregistrement présence */
+var myKey=ME.replace(/[.#$[\]]/g,"_");
+rtdb.ref("online/"+myKey).set({lastSeen:Date.now(),email:ME});
+setInterval(function(){ rtdb.ref("online/"+myKey).update({lastSeen:Date.now()}); },60000);
+
+/* ══════════════════════════════
+   SESSION TIMEOUT (30 min)
+══════════════════════════════ */
+var SESSION_LIMIT=30*60*1000; var WARN_BEFORE=60*1000;
+var lastActivity=Date.now();
+function resetSessionTimer(){ lastActivity=Date.now(); document.getElementById("sessionWarn").classList.remove("visible"); }
+document.addEventListener("mousemove",resetSessionTimer,{passive:true});
+document.addEventListener("keydown",resetSessionTimer,{passive:true});
+setInterval(function(){
+  var idle=Date.now()-lastActivity;
+  var warn=document.getElementById("sessionWarn");
+  if(idle>=SESSION_LIMIT){ logout(); return; }
+  if(idle>=SESSION_LIMIT-WARN_BEFORE){
+    warn.classList.add("visible");
+    document.getElementById("sessionCountdown").textContent=Math.ceil((SESSION_LIMIT-idle)/1000);
+  } else { warn.classList.remove("visible"); }
+},1000);
+
+/* ══════════════════════════════
+   DARK MODE
+══════════════════════════════ */
+function toggleDark(){
+  darkMode=!darkMode;
+  localStorage.setItem("darkMode",darkMode?"1":"0");
+  document.documentElement.setAttribute("data-theme",darkMode?"dark":"light");
+  updateDarkBtn();
+}
+function updateDarkBtn(){ document.getElementById("darkBtn").textContent=darkMode?"☀️":"🌙"; }
+
+/* ══════════════════════════════
+   MOBILE SIDEBAR
+══════════════════════════════ */
+function toggleSidebar(){
+  var sb=document.getElementById("mainSidebar");
+  var ov=document.getElementById("sbOverlay");
+  var open=sb.classList.toggle("open");
+  ov.classList.toggle("open",open);
+}
+
+/* ══════════════════════════════
+   GLOBAL SEARCH
+══════════════════════════════ */
+function globalSearch(q){
+  var res=document.getElementById("gsearchResults");
+  if(!q||q.length<2){ res.classList.remove("open"); return; }
+  q=q.toLowerCase();
+  var html="";
+  var users=allUsers.filter(function(u){ return u.email.toLowerCase().includes(q); }).slice(0,4);
+  if(users.length){
+    html+='<div class="gs-section">Comptes</div>';
+    users.forEach(function(u){
+      html+='<div class="gs-item" onclick="sp(\'list\');document.getElementById(\'searchBar\').value=\''+escHTML(u.email)+'\';filterAndRender();closeGSearch()">'+
+        '<span class="gs-item-ic">'+(u.role==="admin"?"🛡️":"👤")+'</span>'+
+        '<div><div>'+escHTML(u.email)+'</div><div class="gs-item-sub">'+u.role+'</div></div></div>';
+    });
+  }
+  var pages=[
+    {n:"overview",l:"Vue d'ensemble",ic:"📊"},{n:"list",l:"Liste comptes",ic:"👥"},
+    {n:"add",l:"Ajouter compte",ic:"➕"},{n:"notif",l:"Notifications",ic:"📧"},
+    {n:"chat",l:"Messagerie",ic:"💬"},{n:"annonces",l:"Annonces",ic:"📢"},
+    {n:"stats",l:"Statistiques",ic:"📈"},{n:"alerts",l:"Alertes",ic:"🚨"},
+    {n:"activity",l:"Journal",ic:"📜"},{n:"settings",l:"Paramètres",ic:"⚙️"}
+  ].filter(function(p){ return p.l.toLowerCase().includes(q); }).slice(0,3);
+  if(pages.length){
+    html+='<div class="gs-section">Pages</div>';
+    pages.forEach(function(p){
+      html+='<div class="gs-item" onclick="sp(\''+p.n+'\');closeGSearch()"><span class="gs-item-ic">'+p.ic+'</span><div>'+p.l+'</div></div>';
+    });
+  }
+  if(!html) html='<div class="gs-empty">Aucun résultat pour "'+escHTML(q)+'"</div>';
+  res.innerHTML=html;
+  res.classList.add("open");
+}
+function closeGSearch(){
+  document.getElementById("gsearchResults").classList.remove("open");
+  document.getElementById("gsearchInp").value="";
+}
+document.addEventListener("click",function(e){
+  if(!e.target.closest(".gsearch-wrap")) closeGSearch();
+});
+
+/* ══════════════════════════════
+   KEYBOARD SHORTCUTS
+══════════════════════════════ */
+var kbdSeq=""; var kbdTimer=null;
+var pageMap={"1":"overview","2":"list","3":"add","4":"notif","5":"chat","6":"annonces","7":"stats","8":"alerts","9":"activity","0":"settings"};
+document.addEventListener("keydown",function(e){
+  var tag=e.target.tagName.toLowerCase();
+  if(tag==="input"||tag==="textarea"||tag==="select") return;
+  if(e.ctrlKey && e.key==="k"){ e.preventDefault(); document.getElementById("gsearchInp").focus(); return; }
+  if(e.ctrlKey && e.key==="d"){ e.preventDefault(); toggleDark(); return; }
+  if(e.key==="Escape"){ document.querySelectorAll(".overlay.open").forEach(function(o){o.classList.remove("open");}); closeGSearch(); return; }
+  if(e.key==="?"){ openM("mKbd"); return; }
+  if(e.key==="g"||e.key==="G"){ kbdSeq="g"; clearTimeout(kbdTimer); kbdTimer=setTimeout(function(){kbdSeq="";},1500); return; }
+  if(kbdSeq==="g" && pageMap[e.key]){ sp(pageMap[e.key]); kbdSeq=""; clearTimeout(kbdTimer); }
+});
+
+/* ══════════════════════════════
+   TOAST
+══════════════════════════════ */
+function toast(msg,type){
+  var w=document.getElementById("toastWrap");
+  var el=document.createElement("div");
+  el.className="toast "+(type||"info");
+  var icons={success:"✅",error:"❌",info:"ℹ️"};
+  el.innerHTML='<span>'+(icons[type]||"ℹ️")+'</span><span>'+msg+'</span>';
+  w.appendChild(el);
+  setTimeout(function(){el.style.opacity="0";el.style.transition="opacity .3s";setTimeout(function(){el.remove();},300);},3500);
+}
+
+/* ══════════════════════════════
+   NAVIGATION
+══════════════════════════════ */
+var PAGES=["overview","list","add","notif","chat","annonces","stats","alerts","activity","settings"];
+function sp(name){
+  PAGES.forEach(function(p){
+    document.getElementById("page-"+p).classList.remove("active");
+    document.getElementById("nav-"+p).classList.remove("active");
+  });
+  document.getElementById("page-"+name).classList.add("active");
+  document.getElementById("nav-"+name).classList.add("active");
+  document.getElementById("mainSidebar").classList.remove("open");
+  document.getElementById("sbOverlay").classList.remove("open");
+  if(name==="chat")     { loadGroups(); if(chatTabActive==="dms") loadDmList(); }
+  if(name==="stats")    loadStats();
+  if(name==="alerts")   renderAlerts();
+  if(name==="activity") loadActivityLog();
+  if(name==="annonces") loadAnnonces();
+}
+function openM(id){ document.getElementById(id).classList.add("open"); }
+function closeM(id){ document.getElementById(id).classList.remove("open"); editDocId=null; editEmail=null; }
+
+/* ══════════════════════════════
+   LOAD USERS
+══════════════════════════════ */
+function loadUsers(){
+  db.collection("users").get().then(function(snap){
+    allUsers=[];
+    snap.forEach(function(d){ allUsers.push(Object.assign({id:d.id},d.data())); });
+    updateStats(); filterAndRender(); renderPreview(); updateNotifCounts(); populateOneEmailSel(); loadAdminsForGroup();
+    var sel=document.getElementById("chatAccountSel");
+    if(sel){
+      sel.innerHTML='<option value="">— Mon compte ('+ME+') —</option>'+
+        allUsers.filter(function(u){return u.email!==ME;}).map(function(u){
+          return'<option value="'+u.email+'">'+(u.role==="admin"?"🛡️":"👤")+' '+u.email+'</option>';
+        }).join("");
+    }
+  }).catch(function(){ toast("Erreur chargement utilisateurs.","error"); });
+}
+function updateStats(){
+  var adm=allUsers.filter(function(u){return u.role==="admin";}).length;
+  document.getElementById("stTotal").textContent=allUsers.length;
+  document.getElementById("stAdmins").textContent=adm;
+  document.getElementById("stUsers").textContent=allUsers.length-adm;
+  document.getElementById("totalCount").textContent=allUsers.length;
+  document.getElementById("sbCount").textContent=allUsers.length;
+}
+
+/* ══════════════════════════════
+   IOT LIVE WIDGET
+══════════════════════════════ */
+rtdb.ref("smart_classroom").limitToLast(1).on("value",function(snap){
+  if(!snap.hasChildren()) return;
+  var last=null; snap.forEach(function(c){last=c.val();});
+  if(!last) return;
+  lastIotData=last;
+  var temp=parseFloat(last.temperature)||0;
+  var hum=parseFloat(last.humidite)||0;
+  var pres=parseInt(last.personnes)||0;
+  var dec=last.decision||last.Decision||"—";
+
+  document.getElementById("iot-temp").textContent=temp.toFixed(1);
+  document.getElementById("iot-hum").textContent=hum.toFixed(1);
+  document.getElementById("iot-pres").textContent=pres;
+  document.getElementById("iot-dec").textContent=dec;
+  document.getElementById("iot-live-label").textContent="En direct · "+new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+
+  var tMin=sysConfig.tempMin||15, tMax=sysConfig.tempMax||35;
+  document.getElementById("iot-temp-bar").style.width=Math.min(100,Math.max(0,((temp-tMin)/(tMax-tMin))*100)).toFixed(1)+"%";
+  document.getElementById("iot-hum-bar").style.width=Math.min(100,hum).toFixed(1)+"%";
+  var maxP=sysConfig.maxP||30;
+  document.getElementById("iot-pres-bar").style.width=Math.min(100,(pres/maxP)*100).toFixed(1)+"%";
+
+  var tStatus=document.getElementById("iot-temp-status");
+  if(sysConfig.tempMax&&temp>sysConfig.tempMax) setIotStatus(tStatus,"🔴 Trop élevée","var(--red)");
+  else if(sysConfig.tempMin&&temp<sysConfig.tempMin) setIotStatus(tStatus,"❄️ Trop basse","var(--cyan)");
+  else setIotStatus(tStatus,"✅ Normale","var(--green)");
+
+  var hStatus=document.getElementById("iot-hum-status");
+  if(sysConfig.humMax&&hum>sysConfig.humMax) setIotStatus(hStatus,"⚠️ Trop élevée","var(--orange)");
+  else setIotStatus(hStatus,"✅ Normale","var(--green)");
+
+  var pStatus=document.getElementById("iot-pres-status");
+  if(sysConfig.maxP&&pres>sysConfig.maxP) setIotStatus(pStatus,"🚨 Capacité dépassée","var(--red)");
+  else setIotStatus(pStatus,"✅ Dans les limites","var(--green)");
+
+  checkThresholds(last);
+});
+
+function setIotStatus(el,txt,color){
+  el.innerHTML='<span class="iot-pulse" style="background:'+color+'"></span><span style="color:'+color+'">'+txt+'</span>';
+}
+
+/* ══════════════════════════════
+   BROWSER NOTIFICATIONS
+══════════════════════════════ */
+function requestNotifPermission(){
+  if("Notification" in window && Notification.permission==="default") Notification.requestPermission();
+}
+function sendBrowserNotif(title,body){
+  if("Notification" in window && Notification.permission==="granted"){
+    var n=new Notification(title,{body:body,icon:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>"});
+    setTimeout(function(){n.close();},5000);
+  }
+  blinkTitle(title);
+}
+var blinkInterval=null;
+function blinkTitle(msg){
+  clearInterval(blinkInterval);
+  var orig=document.title;
+  var on=false;
+  blinkInterval=setInterval(function(){
+    document.title=on?orig:msg; on=!on;
+  },1200);
+  setTimeout(function(){clearInterval(blinkInterval);document.title=orig;},10000);
+}
+
+/* ══════════════════════════════
+   PREVIEW
+══════════════════════════════ */
+function renderPreview(){
+  var tbody=document.getElementById("prevList");
+  var list=allUsers.slice(0,6);
+  if(!list.length){tbody.innerHTML='<tr><td colspan="4" class="tbl-empty">Aucun utilisateur.</td></tr>';return;}
+  tbody.innerHTML=list.map(function(u,i){return rowHTML(u,i+1,true);}).join("");
+}
+
+/* ══════════════════════════════
+   TABLE
+══════════════════════════════ */
+function filterAndRender(){
+  var q=(document.getElementById("searchBar").value||"").toLowerCase();
+  var role=document.getElementById("roleFilter").value;
+  var list=allUsers.filter(function(u){
+    return(!q||u.email.toLowerCase().includes(q))&&(!role||u.role===role);
+  });
+  curPage=1; renderTable(list);
+}
+function renderTable(list){
+  var tbody=document.getElementById("userTbody");
+  var totPgs=Math.ceil(list.length/PER)||1;
+  if(curPage>totPgs)curPage=totPgs;
+  var st=(curPage-1)*PER, sl=list.slice(st,st+PER);
+  var from=list.length?st+1:0, to=Math.min(st+PER,list.length);
+  document.getElementById("pgInfo").textContent=list.length?from+" – "+to+" sur "+list.length+" compte(s)":"Aucun résultat";
+  tbody.innerHTML=sl.length?sl.map(function(u,i){return rowHTML(u,st+i+1,false);}).join(""):'<tr><td colspan="5" class="tbl-empty">🔍 Aucun compte trouvé.</td></tr>';
+  var btns='<button class="pg-btn" onclick="goPage('+curPage+',-1)" '+(curPage===1?"disabled":"")+'>← Préc</button>';
+  pRange(curPage,totPgs).forEach(function(p){
+    if(p==="…")btns+='<span style="padding:0 4px;color:var(--subtle)">…</span>';
+    else btns+='<button class="pg-btn'+(p===curPage?" active":"")+'" onclick="jumpPage('+p+')">'+ p+'</button>';
+  });
+  btns+='<button class="pg-btn" onclick="goPage('+curPage+',1)" '+(curPage>=totPgs?"disabled":"")+'>Suiv →</button>';
+  document.getElementById("pgBtns").innerHTML=btns;
+  renderTable._list=list;
+}
+function pRange(c,t){
+  if(t<=7){var r=[];for(var i=1;i<=t;i++)r.push(i);return r;}
+  var pages=[1];if(c>3)pages.push("…");
+  for(var p=Math.max(2,c-1);p<=Math.min(t-1,c+1);p++)pages.push(p);
+  if(c<t-2)pages.push("…");pages.push(t);return pages;
+}
+function goPage(c,d){curPage=c+d;if(renderTable._list)renderTable(renderTable._list);}
+function jumpPage(p){curPage=p;if(renderTable._list)renderTable(renderTable._list);}
+
+function rowHTML(u,idx,preview){
+  var init=u.email?u.email.charAt(0).toUpperCase():"?";
+  var lastLogin=u.lastLogin?new Date(u.lastLogin).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}):"Jamais";
+  if(preview){
+    return '<tr>'+
+      '<td style="color:var(--subtle);font-size:12px;width:34px">'+idx+'</td>'+
+      '<td><div style="display:flex;align-items:center"><div class="u-ava">'+init+'</div><span style="font-weight:600">'+u.email+'</span></div></td>'+
+      '<td><span class="role-badge role-'+u.role+'">'+(u.role==="admin"?"🛡️ Admin":"👤 User")+'</span></td>'+
+      '<td><div class="act-btns">'+
+        '<button class="btn btn-secondary btn-sm" style="color:var(--orange)" onclick="openRoleModal(\''+u.id+'\',\''+u.email+'\',\''+u.role+'\')">✏️ Rôle</button>'+
+      '</div></td></tr>';
+  }
+  return '<tr>'+
+    '<td style="color:var(--subtle);font-size:12px;width:34px">'+idx+'</td>'+
+    '<td><div style="display:flex;align-items:center"><div class="u-ava">'+init+'</div><span style="font-weight:600">'+u.email+'</span></div></td>'+
+    '<td><span class="role-badge role-'+u.role+'">'+(u.role==="admin"?"🛡️ Admin":"👤 User")+'</span></td>'+
+    '<td><span style="font-size:12px;color:var(--subtle)">'+lastLogin+'</span></td>'+
+    '<td><div class="act-btns">'+
+      '<button class="btn btn-secondary btn-sm" style="color:var(--orange);border-color:rgba(245,158,11,.2)" onclick="openRoleModal(\''+u.id+'\',\''+u.email+'\',\''+u.role+'\')">✏️ Rôle</button>'+
+      '<button class="btn btn-secondary btn-sm" style="color:var(--purple);border-color:rgba(124,58,237,.2)" onclick="openPassModal(\''+u.id+'\',\''+u.email+'\')">🔑 Mdp</button>'+
+      '<button class="btn btn-danger btn-sm" onclick="deleteUser(\''+u.id+'\',\''+u.email+'\')">🗑️</button>'+
+    '</div></td></tr>';
+}
+
+/* ══════════════════════════════
+   USER ACTIONS
+══════════════════════════════ */
+function openRoleModal(id,email,role){editDocId=id;editEmail=email;document.getElementById("mRoleEmail").textContent=email;document.getElementById("mRoleSel").value=role;openM("mRole");}
+function saveRole(){
+  if(!editDocId)return;
+  var r=document.getElementById("mRoleSel").value;
+  db.collection("users").doc(editDocId).update({role:r}).then(function(){
+    toast("Rôle mis à jour !","success");logActivity("edit","Rôle de "+editEmail+" → "+r,ME);closeM("mRole");loadUsers();
+  }).catch(function(){toast("Erreur mise à jour.","error");});
+}
+function openPassModal(id,email){editDocId=id;editEmail=email;document.getElementById("mPassEmail").textContent=email;document.getElementById("mPassVal").value="";openM("mPass");}
+function savePass(){
+  if(!editDocId)return;
+  var p=document.getElementById("mPassVal").value.trim();
+  if(!p){toast("Entrez un mot de passe.","error");return;}
+  db.collection("users").doc(editDocId).update({password:p}).then(function(){
+    toast("Mot de passe mis à jour !","success");logActivity("pass","Mot de passe modifié pour "+editEmail,ME);closeM("mPass");
+  }).catch(function(){toast("Erreur.","error");});
+}
+function deleteUser(id,email){
+  if(!confirm("Supprimer le compte "+email+" ?"))return;
+  db.collection("users").doc(id).delete().then(function(){
+    toast("Compte supprimé.","success");logActivity("del","Compte supprimé : "+email,ME);loadUsers();
+  }).catch(function(){toast("Erreur suppression.","error");});
+}
+
+/* ══════════════════════════════
+   ADD USER
+══════════════════════════════ */
+function generatePassword(){var p="";for(var i=0;i<8;i++)p+=Math.floor(Math.random()*10);document.getElementById("nPass").value=p;}
+function togglePassAdd(){var i=document.getElementById("nPass");i.type=i.type==="text"?"password":"text";}
+function clearAddForm(){document.getElementById("nEmail").value="";document.getElementById("nPass").value="";document.getElementById("nRole").value="user";}
+function addUser(){
+  var email=document.getElementById("nEmail").value.trim();
+  var pass=document.getElementById("nPass").value.trim();
+  var role=document.getElementById("nRole").value;
+  if(!email||!pass){toast("Email et mot de passe requis.","error");return;}
+  
+  var btn=document.getElementById("addBtn");
+  btn.disabled=true;
+  btn.textContent="⏳ Vérification…";
+
+  // ✅ Vérifier si l'email existe déjà avant de créer
+  db.collection("users").where("email","==",email).get().then(function(snap){
+    if(!snap.empty){
+      toast("❌ Cet email est déjà utilisé !","error");
+      btn.disabled=false;
+      btn.textContent="✅ Créer et envoyer l'email";
+      return;
+    }
+    // Email libre → créer le compte
+    btn.textContent="⏳ Création…";
+    db.collection("users").add({
+      email:email,
+      password:pass,
+      role:role,
+      lastLogin:null,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function(){
+      return emailjs.send(EJS_SVC,EJS_TPL,{
+        to_email:email,
+        message:"Mot de passe : "+pass,
+        subject:"Vos identifiants Smart Classroom"
+      });
+    }).then(function(){
+      toast("Compte créé !","success");
+      logActivity("add","Compte créé : "+email+" ("+role+")",ME);
+      clearAddForm();
+      loadUsers();
+    }).catch(function(){
+      toast("Compte créé (erreur email).","error");
+      loadUsers();
+    }).finally(function(){
+      btn.disabled=false;
+      btn.textContent="✅ Créer et envoyer l'email";
+    });
+  }).catch(function(){
+    toast("Erreur de vérification.","error");
+    btn.disabled=false;
+    btn.textContent="✅ Créer et envoyer l'email";
+  });
+}
+
+function massResetPasswords(){
+  var roles=["user","admin","all"];
+  var r=prompt("Réinitialiser les mots de passe de quel groupe ?\n(tapez: user, admin, ou all)");
+  if(!r||!roles.includes(r)){toast("Opération annulée.","info");return;}
+  if(!confirm("Générer de nouveaux mots de passe numériques (8 chiffres) pour tous les "+(r==="all"?"utilisateurs":r+"s")+" ?"))return;
+  var targets=r==="all"?allUsers:allUsers.filter(function(u){return u.role===r;});
+  if(!targets.length){toast("Aucun compte trouvé.","error");return;}
+  var batch=db.batch();
+  var results=[];
+  targets.forEach(function(u){
+    var pass="";for(var i=0;i<8;i++)pass+=Math.floor(Math.random()*10);
+    batch.update(db.collection("users").doc(u.id),{password:pass});
+    results.push({email:u.email,pass:pass});
+  });
+  batch.commit().then(function(){
+    toast(results.length+" mot(s) de passe réinitialisé(s).","success");
+    logActivity("pass","Réinitialisation en masse ("+r+") — "+results.length+" comptes",ME);
+    var csv="Email,Nouveau mot de passe\n"+results.map(function(x){return x.email+","+x.pass;}).join("\n");
+    downloadCSV(csv,"reset_passwords.csv");
+  }).catch(function(){toast("Erreur réinitialisation.","error");});
+}
+
+/* ══════════════════════════════
+   EXPORT CSV
+══════════════════════════════ */
+function downloadCSV(csv,filename){
+  var blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);
+}
+function exportUsersCSV(){
+  var rows=["#,Email,Rôle,Dernière connexion"];
+  allUsers.forEach(function(u,i){
+    var ll=u.lastLogin?new Date(u.lastLogin).toLocaleDateString("fr-FR"):"Jamais";
+    rows.push((i+1)+","+u.email+","+u.role+","+ll);
+  });
+  downloadCSV(rows.join("\n"),"comptes_"+new Date().toLocaleDateString("fr-FR").replace(/\//g,"-")+".csv");
+  toast("Export CSV prêt.","success");
+}
+function exportStatsCSV(){
+  if(!cachedStats||!cachedStats.rows||!cachedStats.rows.length){toast("Chargez d'abord les statistiques.","error");return;}
+  var rows=["Timestamp,Température,Humidité,Personnes,Décision"];
+  cachedStats.rows.forEach(function(r){
+    rows.push((r.ts||"")+"," +(r.t||"")+"," +(r.h||"")+"," +(r.p||"")+"," +(r.dec||""));
+  });
+  downloadCSV(rows.join("\n"),"stats_"+new Date().toLocaleDateString("fr-FR").replace(/\//g,"-")+".csv");
+  toast("Export CSV prêt.","success");
+}
+function exportAlertsCSV(){
+  if(!alertsData.length){toast("Aucune alerte à exporter.","error");return;}
+  var rows=["Titre,Détail,Sévérité,Heure"];
+  alertsData.forEach(function(a){rows.push('"'+a.title+'","'+a.detail+'",'+a.sev+","+a.time);});
+  downloadCSV(rows.join("\n"),"alertes_"+new Date().toLocaleDateString("fr-FR").replace(/\//g,"-")+".csv");
+  toast("Export CSV prêt.","success");
+}
+function exportActivityCSV(){
+  if(!activityLogCache.length){toast("Aucune action à exporter.","error");return;}
+  var rows=["Message,Par,Heure,Type"];
+  activityLogCache.forEach(function(a){rows.push('"'+a.msg+'","'+a.who+'","'+a.time+'",'+a.type);});
+  downloadCSV(rows.join("\n"),"journal_"+new Date().toLocaleDateString("fr-FR").replace(/\//g,"-")+".csv");
+  toast("Export CSV prêt.","success");
+}
+
+/* ══════════════════════════════
+   NOTIFICATIONS
+══════════════════════════════ */
+function selectNType(t){
+  notifType=t;
+  ["all","admins","users","one"].forEach(function(x){document.getElementById("nt-"+x).classList.remove("selected");});
+  document.getElementById("nt-"+t).classList.add("selected");
+  document.getElementById("oneEmailWrap").style.display=t==="one"?"block":"none";
+}
+function updateNotifCounts(){
+  var adm=allUsers.filter(function(u){return u.role==="admin";}).length;
+  var usr=allUsers.filter(function(u){return u.role==="user";}).length;
+  document.getElementById("nc-all").textContent=allUsers.length+" dest.";
+  document.getElementById("nc-admins").textContent=adm+" dest.";
+  document.getElementById("nc-users").textContent=usr+" dest.";
+}
+function populateOneEmailSel(){
+  var sel=document.getElementById("oneEmailSel");
+  sel.innerHTML='<option value="">— Choisir —</option>'+allUsers.map(function(u){return'<option value="'+u.email+'">'+u.email+' ('+u.role+')</option>';}).join("");
+}
+function sendNotification(){
+  var subj=document.getElementById("nSubject").value.trim();
+  var msg=document.getElementById("nMessage").value.trim();
+  if(!subj||!msg){toast("Objet et message requis.","error");return;}
+  var targets=[];
+  if(notifType==="all") targets=allUsers;
+  else if(notifType==="admins") targets=allUsers.filter(function(u){return u.role==="admin";});
+  else if(notifType==="users") targets=allUsers.filter(function(u){return u.role==="user";});
+  else if(notifType==="one"){
+    var em=document.getElementById("oneEmailSel").value;
+    if(!em){toast("Choisissez un destinataire.","error");return;}
+    targets=[{email:em}];
+  }
+  if(!targets.length){toast("Aucun destinataire.","error");return;}
+  var btn=document.getElementById("sendNotifBtn");btn.disabled=true;btn.textContent="⏳ Envoi…";
+  var sent=0,failed=0;
+  var promises=targets.map(function(u){
+    return emailjs.send(EJS_SVC,EJS_TPL,{to_email:u.email,message:msg,subject:subj})
+      .then(function(){sent++;}).catch(function(){failed++;});
+  });
+  Promise.all(promises).then(function(){
+    toast(sent+" envoyé(s)"+(failed?" · "+failed+" échec(s)":""), failed?"error":"success");
+    logActivity("notif","Email envoyé à "+targets.length+" destinataire(s) : "+subj,ME);
+    addNotifHistory(subj,targets.length,sent,failed);
+    document.getElementById("nSubject").value="";
+    document.getElementById("nMessage").value="";
+    btn.disabled=false;btn.textContent="📤 Envoyer la notification";
+  });
+}
+function addNotifHistory(subj,total,sent,failed){
+  var item={subj:subj,total:total,sent:sent,failed:failed,time:new Date().toLocaleString("fr-FR")};
+  notifHist.unshift(item);
+  renderNotifHistory();
+}
+function renderNotifHistory(){
+  var cont=document.getElementById("notifHistory");
+  if(!notifHist.length){cont.innerHTML='<div class="log-empty">Aucune notification envoyée.</div>';return;}
+  cont.innerHTML=notifHist.slice(0,10).map(function(i){
+    var ok=i.failed===0;
+    return'<div class="nh-item"><div class="nh-dot '+(ok?"ok":"fail")+'"></div>'+
+      '<div class="nh-body"><div class="nh-to">'+escHTML(i.subj)+'</div>'+
+      '<div class="nh-subj">'+i.total+' destinataire(s) · '+i.sent+' envoyé(s)'+(i.failed?' · '+i.failed+' échec(s)':'')+'</div>'+
+      '<div class="nh-time">'+i.time+'</div></div></div>';
+  }).join("");
+}
+function clearNotifHistory(){ notifHist=[]; renderNotifHistory(); toast("Historique effacé.","info"); }
+
+/* ══════════════════════════════
+   ACTIVITY LOG
+══════════════════════════════ */
+function logActivity(type,msg,who){
+  var item={type:type,msg:msg,who:who,time:new Date().toLocaleString("fr-FR")};
+  db.collection("activity_log").add({...item,timestamp:firebase.firestore.FieldValue.serverTimestamp()})
+    .catch(function(){});
+}
+function loadActivityLog(){
+  var cont=document.getElementById("activityLog");
+  cont.innerHTML='<div class="log-empty">Chargement…</div>';
+  db.collection("activity_log").orderBy("timestamp","desc").limit(50).get().then(function(snap){
+    activityLogCache=[];
+    if(snap.empty){cont.innerHTML='<div class="log-empty">Aucune action enregistrée.</div>';return;}
+    snap.forEach(function(d){activityLogCache.push(d.data());});
+    renderActivityLog();
+    document.getElementById("sbActivity").textContent=activityLogCache.length;
+  }).catch(function(){cont.innerHTML='<div class="log-empty">Erreur chargement.</div>';});
+}
+function renderActivityLog(){
+  var cont=document.getElementById("activityLog");
+  var dotClass={add:"ld-add",del:"ld-del",edit:"ld-edit",pass:"ld-pass",notif:"ld-notif"};
+  cont.innerHTML=activityLogCache.map(function(a){
+    return'<div class="log-item">'+
+      '<div class="log-dot-wrap"><div class="log-dot '+(dotClass[a.type]||"ld-edit")+'"></div></div>'+
+      '<div><div class="log-msg">'+escHTML(a.msg||"")+'</div>'+
+      '<div class="log-who">Par '+escHTML(a.who||"")+'</div>'+
+      '<div class="log-time">'+escHTML(a.time||"")+'</div></div></div>';
+  }).join("");
+}
+function clearActivityLog(){
+  if(!confirm("Effacer tout le journal d'activité ?"))return;
+  db.collection("activity_log").get().then(function(snap){
+    var batch=db.batch();
+    snap.forEach(function(d){batch.delete(d.ref);});
+    return batch.commit();
+  }).then(function(){
+    activityLogCache=[];
+    document.getElementById("activityLog").innerHTML='<div class="log-empty">Journal effacé.</div>';
+    document.getElementById("sbActivity").textContent="0";
+    toast("Journal effacé.","success");
+  }).catch(function(){toast("Erreur.","error");});
+}
+
+/* ══════════════════════════════
+   ALERTES
+══════════════════════════════ */
+function checkThresholds(data){
+  var now=new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  var temp=parseFloat(data.temperature)||0;
+  var hum=parseFloat(data.humidite)||0;
+  var pres=parseInt(data.personnes)||0;
+  if(sysConfig.tempMax&&temp>sysConfig.tempMax){
+    addAlert("Température critique","Temp. actuelle : "+temp.toFixed(1)+"°C (seuil: "+sysConfig.tempMax+"°C)","critical",now);
+  }
+  if(sysConfig.tempMin&&temp<sysConfig.tempMin){
+    addAlert("Température trop basse","Temp. actuelle : "+temp.toFixed(1)+"°C (seuil: "+sysConfig.tempMin+"°C)","warning",now);
+  }
+  if(sysConfig.humMax&&hum>sysConfig.humMax){
+    addAlert("Humidité excessive","Hum. actuelle : "+hum.toFixed(1)+"% (seuil: "+sysConfig.humMax+"%)","warning",now);
+  }
+  if(sysConfig.maxP&&pres>sysConfig.maxP){
+    addAlert("Capacité dépassée","Présence : "+pres+" pers. (max: "+sysConfig.maxP+")","critical",now);
+  }
+}
+function addAlert(title,detail,sev,time){
+  var existing=alertsData.find(function(a){return a.title===title&&!a.read;});
+  if(existing){existing.detail=detail;existing.time=time;}
+  else alertsData.unshift({title:title,detail:detail,sev:sev,time:time,read:false});
+  alertsData=alertsData.slice(0,50);
+  var unread=alertsData.filter(function(a){return!a.read;}).length;
+  var badge=document.getElementById("sbAlerts");
+  badge.style.display=unread>0?"inline-block":"none";
+  badge.textContent=unread;
+  document.getElementById("stAlerts").textContent=unread;
+  if(document.hidden) sendBrowserNotif("🚨 "+title,detail);
+  if(document.getElementById("page-alerts").classList.contains("active")) renderAlerts();
+}
+function renderAlerts(){
+  var list=document.getElementById("alertsList");
+  var filtered=alertFilter==="all"?alertsData:alertsData.filter(function(a){return a.sev===alertFilter;});
+  if(!filtered.length){
+    list.innerHTML='<div class="empty-state"><div class="ei">🟢</div><p>Aucune alerte. Système nominal.</p></div>';
+    return;
+  }
+  var ic={critical:"🔴",warning:"🟠",info:"ℹ️",ok:"🟢"};
+  list.innerHTML=filtered.map(function(a){
+    return'<div class="alert-card '+a.sev+'">'+
+      '<div class="alert-ic">'+(ic[a.sev]||"⚠️")+'</div>'+
+      '<div class="alert-body"><div class="alert-title">'+escHTML(a.title)+'</div>'+
+      '<div class="alert-detail">'+escHTML(a.detail)+'</div>'+
+      '<div class="alert-time">🕐 '+escHTML(a.time||"")+'</div></div>'+
+      '<span class="alert-sev sev-'+a.sev+'">'+a.sev+'</span></div>';
+  }).join("");
+}
+function filterAlerts(f){
+  alertFilter=f;
+  ["all","critical","warning","ok"].forEach(function(x){document.getElementById("af-"+x).classList.remove("active");});
+  document.getElementById("af-"+f).classList.add("active");
+  renderAlerts();
+}
+function clearAlerts(){alertsData=[];document.getElementById("sbAlerts").style.display="none";document.getElementById("stAlerts").textContent="0";renderAlerts();}
+function markAllRead(){alertsData.forEach(function(a){a.read=true;});document.getElementById("sbAlerts").style.display="none";document.getElementById("stAlerts").textContent="0";toast("Alertes marquées comme lues.","success");}
+
+/* ══════════════════════════════
+   SETTINGS
+══════════════════════════════ */
+function loadSettings(){
+  db.collection("settings").doc("system").get().then(function(d){
+    if(!d.exists)return;
+    var s=d.data();sysConfig=s;
+    if(s.tempMax) document.getElementById("s-tMax").value=s.tempMax;
+    if(s.tempMin) document.getElementById("s-tMin").value=s.tempMin;
+    if(s.humMax) document.getElementById("s-hMax").value=s.humMax;
+    if(s.timeout) document.getElementById("s-timeout").value=s.timeout;
+    if(s.maxP) document.getElementById("s-maxP").value=s.maxP;
+    if(s.ventAuto) document.getElementById("s-ventA").value=s.ventAuto;
+  });
+}
+function saveSettings(){
+  var cfg={
+    tempMax:parseFloat(document.getElementById("s-tMax").value)||null,
+    tempMin:parseFloat(document.getElementById("s-tMin").value)||null,
+    humMax:parseFloat(document.getElementById("s-hMax").value)||null,
+    timeout:parseInt(document.getElementById("s-timeout").value)||null,
+    maxP:parseInt(document.getElementById("s-maxP").value)||null,
+    ventAuto:parseFloat(document.getElementById("s-ventA").value)||null
+  };
+  db.collection("settings").doc("system").set(cfg).then(function(){
+    sysConfig=cfg;
+    toast("Paramètres enregistrés !","success");
+    logActivity("edit","Paramètres système mis à jour",ME);
+  }).catch(function(){toast("Erreur sauvegarde.","error");});
+}
+
+/* ══════════════════════════════
+   RAPPORT HEBDOMADAIRE
+══════════════════════════════ */
+function openReportModal(){
+  openM("mReport");
+  var unread=alertsData.filter(function(a){return!a.read;}).length;
+  var adm=allUsers.filter(function(u){return u.role==="admin";}).length;
+  var weekAgo=new Date(Date.now()-7*86400000);
+  document.getElementById("reportPreview").innerHTML=
+    '<strong>Rapport du '+weekAgo.toLocaleDateString("fr-FR")+' au '+new Date().toLocaleDateString("fr-FR")+'</strong><br>'+
+    '👥 Comptes : '+allUsers.length+' (dont '+adm+' admins)<br>'+
+    '🚨 Alertes non lues : '+unread+'<br>'+
+    (lastIotData?'🌡️ Dernière temp. : '+parseFloat(lastIotData.temperature).toFixed(1)+'°C<br>💧 Dernière hum. : '+parseFloat(lastIotData.humidite).toFixed(1)+'%<br>':'');
+}
+function sendWeeklyReport(){
+  var target=document.getElementById("reportTarget").value;
+  var targets=target==="admins"?allUsers.filter(function(u){return u.role==="admin";}):allUsers;
+  if(!targets.length){toast("Aucun destinataire.","error");return;}
+  var btn=document.getElementById("sendReportBtn");btn.disabled=true;btn.textContent="⏳ Envoi…";
+  var promises=targets.map(function(u){
+    return emailjs.send(EJS_SVC,EJS_TPL,{
+      to_email:u.email,
+      subject:"Rapport hebdomadaire Smart Classroom",
+      message:document.getElementById("reportPreview").innerText
+    }).catch(function(){});
+  });
+  Promise.all(promises).then(function(){
+    toast("Rapport envoyé à "+targets.length+" personne(s).","success");
+    logActivity("notif","Rapport hebdomadaire envoyé ("+target+")",ME);
+    closeM("mReport");
+    btn.disabled=false;btn.textContent="📤 Envoyer";
+  });
+}
+
+/* ══════════════════════════════
+   CHAT - CORRIGÉ
+══════════════════════════════ */
+function escHTML(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function handleChatKey(e){
+  if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMsg();}
+}
+function autoResize(el){el.style.height="auto";el.style.height=Math.min(el.scrollHeight,120)+"px";}
+function scrollToBottom(){var c=document.getElementById("chatMessages");c.scrollTop=c.scrollHeight;}
+
+function loadAdminsForGroup(){
+  var cont=document.getElementById("membersList");
+  var admins=allUsers.filter(function(u){return u.role==="admin"&&u.email!==ME;});
+  if(!admins.length){cont.innerHTML='<div style="font-size:13px;color:var(--subtle)">Aucun autre admin.</div>';return;}
+  cont.innerHTML=admins.map(function(a){
+    return'<label style="display:flex;align-items:center;gap:9px
+          return'<label style="display:flex;align-items:center;gap:9px;padding:6px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text)">'+
+        '<input type="checkbox" value="'+a.email+'">'+
+        '<div class="grp-ava" style="width:28px;height:28px;font-size:12px">'+a.email.charAt(0).toUpperCase()+'</div>'+
+        a.email+'</label>';
+    }).join("");
+  }
+}
+
+function createGroup(){
+  var name=document.getElementById("grpName").value.trim();
+  if(!name){toast("Nom requis.","error");return;}
+  var checks=document.querySelectorAll("#membersList input:checked");
+  var members=[ME];checks.forEach(function(c){members.push(c.value);});
+  db.collection("chat_groups").add({name:name,members:members,createdBy:ME,createdAt:firebase.firestore.FieldValue.serverTimestamp(),lastMsg:"",lastMsgTime:firebase.firestore.FieldValue.serverTimestamp()})
+    .then(function(ref){
+      toast("Groupe créé !","success");logActivity("edit","Groupe créé : "+name,ME);
+      document.getElementById("grpName").value="";
+      document.querySelectorAll("#membersList input").forEach(function(i){i.checked=false;});
+      closeM("mGrp");loadGroups();selectGroup(ref.id,name,members);
+    }).catch(function(){toast("Erreur création groupe.","error");});
+}
+
+function loadGroups(){
+  if(grpUnsub) grpUnsub();
+  var currentViewAs=viewAs;
+  grpUnsub=db.collection("chat_groups").orderBy("lastMsgTime","desc").onSnapshot(function(snap){
+    var list=document.getElementById("groupsList");
+    var html="";
+    snap.forEach(function(d){
+      var g=d.data(),id=d.id;
+      if(!g.members||!g.members.includes(currentViewAs))return;
+      var lastMsg=g.lastMsg||"Aucun message";
+      var lastTime=g.lastMsgTime?fmtTime(g.lastMsgTime.toDate()):"";
+      var initials=(g.name.charAt(0)||"G").toUpperCase();
+      html+='<div class="group-item'+(id===activeGrpId?" active":"")+'" id="grp-'+id+'" data-members=\''+JSON.stringify(g.members||[])+'\' onclick="selectGroup(\''+id+'\',\''+escHTML(g.name)+'\')">'+
+        '<div class="grp-ava-wrap">'+
+          '<div class="grp-ava">'+initials+'</div>'+
+          '<div class="grp-online-dot"></div>'+
+        '</div>'+
+        '<div class="grp-info"><div class="grp-name">'+escHTML(g.name)+'</div><div class="grp-last">'+escHTML(lastMsg.length>36?lastMsg.slice(0,36)+"…":lastMsg)+'</div></div>'+
+        '<div class="grp-meta"><span class="grp-time">'+lastTime+'</span></div>'+
+        (g.createdBy===ME?'<button class="grp-del-btn" onclick="deleteGroup(event,\''+id+'\',\''+escHTML(g.name)+'\')">🗑️</button>':'')+
+      '</div>';
+    });
+    list.innerHTML=html||'<div class="conv-empty-state"><div class="cei">💬</div><p>Aucun groupe pour ce compte.</p></div>';
+  });
+}
+
+function deleteGroup(e,id,name){
+  e.stopPropagation();
+  if(!confirm("Supprimer le groupe \""+name+"\" ?"))return;
+  db.collection("chat_messages").where("groupId","==",id).get().then(function(snap){
+    var batch=db.batch();snap.forEach(function(d){batch.delete(d.ref);});batch.delete(db.collection("chat_groups").doc(id));return batch.commit();
+  }).then(function(){
+    toast("Groupe supprimé.","success");
+    if(activeGrpId===id){activeGrpId=null;document.getElementById("chatHd").style.display="none";document.getElementById("chatInputRow").style.display="none";document.getElementById("chatMessages").innerHTML='<div class="msg-empty">Sélectionnez une conversation</div>';}
+  }).catch(function(){toast("Erreur suppression.","error");});
+}
+
+function selectGroup(id,name,membersArg){
+  activeGrpId=id;
+  var members=membersArg;
+  if(!Array.isArray(members)){
+    var grpEl=document.getElementById("grp-"+id);
+    try{ members=grpEl?JSON.parse(grpEl.dataset.members||"[]"):[] }catch(e){ members=[]; }
+  }
+  document.getElementById("chatHd").style.display="flex";
+  document.getElementById("chatHdAva").textContent=name.charAt(0).toUpperCase();
+  document.getElementById("chatHdName").textContent=name;
+  document.getElementById("chatHdMembers").textContent=members.length+" membre"+(members.length>1?"s":"");
+  var inputRow=document.getElementById("chatInputRow");
+  if(viewAs===ME){
+    inputRow.style.display="block";
+    document.getElementById("chatInput").disabled=false;
+  } else {
+    inputRow.style.display="none";
+  }
+  closeChatSearch();
+  if(chatUnsub)chatUnsub();
+  loadMessages(id);
+  document.querySelectorAll(".group-item").forEach(function(el){el.classList.toggle("active",el.id==="grp-"+id);});
+}
+
+var allMsgRows=[];
+function toggleChatSearch(){
+  var bar=document.getElementById("chatSearchBar");
+  bar.classList.toggle("visible");
+  if(bar.classList.contains("visible"))document.getElementById("chatSearchInp").focus();
+  else{document.getElementById("chatSearchInp").value="";searchMessages("");}
+}
+function closeChatSearch(){document.getElementById("chatSearchBar").classList.remove("visible");document.getElementById("chatSearchInp").value="";searchMessages("");}
+function searchMessages(q){
+  q=(q||"").toLowerCase().trim();
+  allMsgRows.forEach(function(item){
+    if(!q){item.el.classList.remove("search-highlight");return;}
+    var match=item.text.toLowerCase().includes(q);
+    item.el.classList.toggle("search-highlight",match);
+    if(match)item.el.scrollIntoView({block:"nearest"});
+  });
+}
+var EMOJIS=["👍","❤️","😂","👀","✅","🔥"];
+
+function loadMessages(gid){
+  allMsgRows=[];
+  var cont=document.getElementById("chatMessages");
+  cont.innerHTML='<div class="msg-empty" style="text-align:center;margin:auto;color:var(--subtle)">Chargement…</div>';
+  listenTyping(gid);
+  setupScrollListener();
+  if(chatUnsub)chatUnsub();
+  chatUnsub=db.collection("chat_messages").where("groupId","==",gid).orderBy("timestamp","asc")
+    .onSnapshot(function(snap){
+      if(snap.empty){cont.innerHTML='<div class="chat-empty-state"><div class="chat-empty-icon">💬</div><div class="chat-empty-title">Aucun message</div><div class="chat-empty-sub">Soyez le premier à écrire !</div></div>';return;}
+      cont.innerHTML="";allMsgRows=[];
+      var lastDate="";
+      var prevSender="";
+      snap.forEach(function(d){
+        var m=d.data(),msgId=d.id;
+        var mine=(m.sender===viewAs);
+        var ts=m.timestamp?m.timestamp.toDate():new Date();
+        var dateStr=ts.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
+        var timeStr=ts.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+        if(dateStr!==lastDate){
+          lastDate=dateStr;prevSender="";
+          var sep=document.createElement("div");sep.className="msg-date-sep";
+          sep.innerHTML='<span>'+dateStr+'</span>';cont.appendChild(sep);
+        }
+        var reactions=m.reactions||{};
+        var reactHtml=Object.keys(reactions).map(function(emoji){
+          var users=reactions[emoji]||[];
+          if(!users.length)return"";
+          var isMine=users.includes(ME);
+          var clickAttr=viewAs===ME?'onclick="toggleReaction(\''+msgId+'\',\''+emoji+'\')\"':'';
+          return'<button class="reaction-btn'+(isMine?" mine-react":"")+'\" '+clickAttr+'>'+emoji+'<span class="reaction-cnt">'+users.length+'</span></button>';
+        }).filter(Boolean).join("");
+        var pickerHtml=viewAs===ME?'<div class="emoji-picker">'+EMOJIS.map(function(em){return'<button class="ep-btn" onclick="toggleReaction(\''+msgId+'\',\''+em+'\')">'+em+'</button>';}).join("")+'</div>':"";
+        var showAva=(prevSender!==m.sender);
+        prevSender=m.sender;
+        var row=document.createElement("div");
+        row.className="msg-row"+(mine?" mine":"");
+        var avaInitial=(m.sender||"?").charAt(0).toUpperCase();
+        var avaHtml=showAva
+          ?'<div class="msg-ava'+(mine?"":" theirs-ava")+'">'+avaInitial+'</div>'
+          :'<div class="msg-ava hidden">'+avaInitial+'</div>';
+        row.innerHTML=
+          (!mine?avaHtml:"")+
+          '<div style="max-width:62%">'+
+            (!mine&&showAva?'<div class="msg-sender">'+escHTML(m.sender)+'</div>':"")+
+            '<div style="position:relative">'+
+              '<div class="msg-bubble '+(mine?"mine":"theirs")+'">'+escHTML(m.text)+pickerHtml+'</div>'+
+            '</div>'+
+            (reactHtml?'<div class="msg-reactions">'+reactHtml+'</div>':"")+
+            '<div class="msg-meta'+(mine?" mine":"")+'">'+timeStr+(mine?'<span class="msg-checks">✓✓</span>':'')+'</div>'+
+          '</div>'+
+          (mine?avaHtml:"");
+        cont.appendChild(row);
+        allMsgRows.push({el:row,text:m.text||""});
+      });
+      var isInitialLoad=snap.docChanges().every(function(c){return c.type==="added";})&&allMsgRows.length===snap.docs.length;
+      var atBottom=cont.scrollHeight-cont.scrollTop-cont.clientHeight<120;
+      if(isInitialLoad||atBottom){
+        cont.scrollTop=cont.scrollHeight;
+        scrollUnreadCount=0; updateScrollBadge();
+        document.getElementById("scrollBottomBtn").classList.remove("visible");
+      } else {
+        var newOthers=snap.docChanges().filter(function(c){return c.type==="added"&&c.doc.data().sender!==viewAs;});
+        if(newOthers.length){ scrollUnreadCount+=newOthers.length; updateScrollBadge(); }
+      }
+      if(snap.docChanges().some(function(c){return c.type==="added"&&c.doc.data().sender!==viewAs;}) && viewAs===ME){
+        var last=snap.docs[snap.docs.length-1].data();
+        if(document.hidden){
+          sendBrowserNotif("💬 Nouveau message","De "+last.sender+": "+(last.text||"").slice(0,60));
+          unreadMsgCount++;document.getElementById("sbChatBadge").style.display="inline-block";document.getElementById("sbChatBadge").textContent=unreadMsgCount;
+        }
+      }
+    });
+}
+
+function toggleReaction(msgId,emoji){
+  var ref=db.collection("chat_messages").doc(msgId);
+  ref.get().then(function(d){
+    var reactions=d.data().reactions||{};
+    var users=reactions[emoji]||[];
+    var idx=users.indexOf(ME);
+    if(idx>=0)users.splice(idx,1);else users.push(ME);
+    reactions[emoji]=users;
+    ref.update({reactions:reactions});
+  });
+}
+
+function sendMsg(){
+  if(!activeGrpId){toast("Sélectionnez un groupe.","error");return;}
+  if(viewAs!==ME){toast("Mode lecture seule — vous visualisez le compte de "+viewAs,"info");return;}
+  var inp=document.getElementById("chatInput");
+  var text=inp.value.trim();if(!text)return;
+  var key=ME.replace(/[.#$[\]]/g,"_");
+  rtdb.ref("typing/"+activeGrpId+"/"+key).remove();
+  clearTimeout(typingTimeout);
+  inp.value="";inp.style.height="auto";
+  var batch=db.batch();
+  var msgRef=db.collection("chat_messages").doc();
+  batch.set(msgRef,{groupId:activeGrpId,sender:ME,text:text,timestamp:firebase.firestore.FieldValue.serverTimestamp(),reactions:{}});
+  batch.update(db.collection("chat_groups").doc(activeGrpId),{lastMsg:ME+": "+text,lastMsgTime:firebase.firestore.FieldValue.serverTimestamp()});
+  batch.commit().catch(function(){toast("Erreur envoi.","error");});
+}
+
+/* ══════════════════════════════
+   DM
+══════════════════════════════ */
+function switchChatTab(tab){
+  chatTabActive=tab;
+  document.getElementById("tab-groups").classList.toggle("active",tab==="groups");
+  document.getElementById("tab-dms").classList.toggle("active",tab==="dms");
+  document.getElementById("groupsList").style.display=tab==="groups"?"block":"none";
+  document.getElementById("dmList").style.display=tab==="dms"?"block":"none";
+  if(tab==="dms")loadDmList();
+  else loadGroups();
+}
+
+/* ══════════════════════════════
+   CHANGEMENT DE COMPTE AVEC VÉRIFICATION MOT DE PASSE
+══════════════════════════════ */
+function onChatAccountSelect(){
+  var sel=document.getElementById("chatAccountSel");
+  var selectedEmail=sel.value;
+  if(!selectedEmail){
+    resetChatAccount();
+    return;
+  }
+  pendingSwitchEmail=selectedEmail;
+  document.getElementById("verifyTargetEmail").textContent=selectedEmail;
+  document.getElementById("mVerifySwitch").classList.add("open");
+}
+
+function confirmSwitchAccount(){
+  var pass=document.getElementById("verifyPassInput").value.trim();
+  if(!pass){toast("Veuillez entrer le mot de passe.","error");return;}
+  
+  db.collection("users").where("email","==",pendingSwitchEmail).get().then(function(snap){
+    if(snap.empty){toast("Compte introuvable.","error");return;}
+    var userDoc=snap.docs[0];
+    var userData=userDoc.data();
+    if(userData.password===pass){
+      viewAs=pendingSwitchEmail;
+      var banner=document.getElementById("chatViewingBanner");
+      var label=document.getElementById("chatViewingLabel");
+      banner.classList.add("visible");
+      label.textContent="Vue du compte : "+viewAs;
+      activeGrpId=null;
+      if(chatUnsub){chatUnsub();chatUnsub=null;}
+      document.getElementById("chatHd").style.display="none";
+      document.getElementById("chatInputRow").style.display="none";
+      document.getElementById("chatMessages").innerHTML=
+        '<div class="chat-empty-state"><div class="chat-empty-icon">💬</div>'+
+        '<div class="chat-empty-title">Choisissez une conversation</div>'+
+        '<div class="chat-empty-sub">Sélectionnez un groupe ou un message direct</div></div>';
+      loadGroups();
+      if(chatTabActive==="dms") loadDmList();
+      closeM("mVerifySwitch");
+      document.getElementById("verifyPassInput").value="";
+      toast("Vous visualisez maintenant le compte : "+viewAs,"success");
+      logActivity("edit","Changement de vue vers le compte "+viewAs,ME);
+    } else {
+      toast("Mot de passe incorrect.","error");
+      document.getElementById("verifyPassInput").value="";
+    }
+  }).catch(function(){toast("Erreur de vérification.","error");});
+}
+
+function resetChatAccount(){
+  viewAs=ME;
+  document.getElementById("chatAccountSel").value="";
+  document.getElementById("chatViewingBanner").classList.remove("visible");
+  pendingSwitchEmail=null;
+  activeGrpId=null;
+  if(chatUnsub){chatUnsub();chatUnsub=null;}
+  document.getElementById("chatHd").style.display="none";
+  document.getElementById("chatInputRow").style.display="none";
+  document.getElementById("chatMessages").innerHTML=
+    '<div class="chat-empty-state"><div class="chat-empty-icon">💬</div>'+
+    '<div class="chat-empty-title">Choisissez une conversation</div>'+
+    '<div class="chat-empty-sub">Sélectionnez un groupe ou un message direct</div></div>';
+  loadGroups();
+  if(chatTabActive==="dms") loadDmList();
+}
+
+function getDmId(a,b){return[a,b].sort().join("|||");}
+
+function loadDmList(){
+  var cont=document.getElementById("dmList");
+  var others=allUsers.filter(function(u){return u.email!==viewAs;});
+  if(!others.length){cont.innerHTML='<div class="conv-empty-state"><div class="cei">✉️</div><p>Aucun autre utilisateur.</p></div>';return;}
+  cont.innerHTML=others.map(function(a){
+    var init=a.email.charAt(0).toUpperCase();
+    var key=btoa(a.email).replace(/[=+/]/g,"_");
+    var roleIc=a.role==="admin"?"🛡️":"👤";
+    return'<div class="dm-item" id="dm-'+key+'" onclick="selectDm(\''+a.email+'\')">'+
+      '<div class="grp-ava-wrap" id="dm-wrap-'+key+'">'+
+        '<div class="grp-ava dm-ava" style="width:46px;height:46px;font-size:16px">'+init+'</div>'+
+        '<div class="grp-online-dot"></div>'+
+      '</div>'+
+      '<div class="grp-info">'+
+        '<div class="grp-name">'+roleIc+' '+escHTML(a.email)+'</div>'+
+        '<div class="grp-last" id="dm-sub-'+key+'">Chargement…</div>'+
+      '</div>'+
+      '<div class="grp-meta"><span class="online-dot offline" id="dm-dot-'+key+'"></span></div>'+
+    '</div>';
+  }).join("");
+  others.forEach(function(a){
+    var key=btoa(a.email).replace(/[=+/]/g,"_");
+    var dmId=getDmId(viewAs,a.email);
+    db.collection("chat_messages").where("groupId","==",dmId).orderBy("timestamp","desc").limit(1).get().then(function(snap){
+      var sub=document.getElementById("dm-sub-"+key);if(!sub)return;
+      sub.textContent=snap.empty?"Aucun message":(function(){var m=snap.docs[0].data();var p=(m.sender===viewAs?"Vous: ":"")+m.text;return p.length>30?p.slice(0,30)+"…":p;})();
+    });
+    rtdb.ref("online/"+a.email.replace(/[.#$[\]]/g,"_")).once("value",function(snap){
+      var dot=document.getElementById("dm-dot-"+key);
+      var wrap=document.getElementById("dm-wrap-"+key);
+      if(!dot||!wrap)return;
+      var online=snap.val()&&(Date.now()-(snap.val().lastSeen||0))<5*60*1000;
+      dot.classList.toggle("online",online);dot.classList.toggle("offline",!online);
+      wrap.classList.toggle("online",online);
+    });
+  });
+}
+
+function selectDm(other){
+  var dmId=getDmId(viewAs,other);activeGrpId=dmId;
+  document.getElementById("chatHd").style.display="flex";
+  document.getElementById("chatHdAva").textContent=other.charAt(0).toUpperCase();
+  document.getElementById("chatHdName").textContent=other;
+  var isOnline=false;
+  rtdb.ref("online/"+other.replace(/[.#$[\]]/g,"_")).once("value",function(snap){
+    isOnline=snap.val()&&(Date.now()-(snap.val().lastSeen||0))<5*60*1000;
+    document.getElementById("chatHdMembers").textContent=isOnline?"● En ligne":"Conversation privée";
+  });
+  document.getElementById("chatHdMembers").textContent="Conversation privée";
+  document.getElementById("chatInputRow").style.display=viewAs===ME?"block":"none";
+  document.querySelectorAll(".dm-item").forEach(function(el){el.classList.remove("active");});
+  var key=btoa(other).replace(/[=+/]/g,"_");
+  var el=document.getElementById("dm-"+key);if(el)el.classList.add("active");
+  if(chatUnsub)chatUnsub();
+  loadMessages(dmId);
+  closeChatSearch();
+}
+
+function fmtTime(date){
+  var diff=(Date.now()-date)/1000;
+  if(diff<60)return"maintenant";
+  if(diff<3600)return Math.floor(diff/60)+"min";
+  if(diff<86400)return date.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+  return date.toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
+}
+
+/* ══════════════════════════════
+   ANNONCES
+══════════════════════════════ */
+function publishAnnonce(){
+  var title=document.getElementById("ancTitle").value.trim();
+  var body=document.getElementById("ancBody").value.trim();
+  var type=document.getElementById("ancType").value;
+  var pinned=document.getElementById("ancPinned").checked;
+  if(!title||!body){toast("Remplissez le titre et le message.","error");return;}
+  var btn=document.getElementById("ancBtn");btn.disabled=true;btn.textContent="⏳ Publication…";
+  db.collection("annonces").add({title:title,body:body,type:type,pinned:pinned,author:ME,timestamp:firebase.firestore.FieldValue.serverTimestamp()})
+    .then(function(){
+      toast("Annonce publiée !","success");logActivity("edit","Annonce : "+title,ME);
+      document.getElementById("ancTitle").value="";document.getElementById("ancBody").value="";document.getElementById("ancPinned").checked=false;
+      btn.disabled=false;btn.textContent="📢 Publier l'annonce";loadAnnonces();
+    }).catch(function(){toast("Erreur.","error");btn.disabled=false;btn.textContent="📢 Publier l'annonce";});
+}
+
+function loadAnnonces(){
+  var cont=document.getElementById("annoncesList");cont.innerHTML='<div class="log-empty">Chargement…</div>';
+  db.collection("annonces").orderBy("timestamp","desc").get().then(function(snap){
+    if(snap.empty){cont.innerHTML='<div class="log-empty">Aucune annonce.</div>';return;}
+    cont.innerHTML=snap.docs.map(function(d){
+      var a=d.data(),id=d.id;
+      var bc={info:"badge-info",warn:"badge-warn",urgent:"badge-urgent"}[a.type]||"badge-info";
+      var bl={info:"ℹ️ Info",warn:"⚠️ Avert.",urgent:"🚨 Urgent"}[a.type]||"Info";
+      var time=a.timestamp?new Date(a.timestamp.toDate()).toLocaleDateString("fr-FR",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}):"—";
+      return'<div class="annonce-card'+(a.pinned?" pinned":"")+'">'+
+        '<div class="annonce-hd"><div><div class="annonce-title">'+(a.pinned?"📌 ":"")+escHTML(a.title)+'</div><div class="annonce-meta">'+escHTML(a.author)+' · '+time+'</div></div>'+
+        '<div style="display:flex;gap:6px;align-items:center;flex-shrink:0"><span class="annonce-badge '+bc+'">'+bl+'</span><button class="btn btn-danger btn-sm" onclick="deleteAnnonce(\''+id+'\')">🗑️</button></div></div>'+
+        '<div class="annonce-body">'+escHTML(a.body)+'</div></div>';
+    }).join("");
+  }).catch(function(){cont.innerHTML='<div class="log-empty">Erreur.</div>';});
+}
+
+function deleteAnnonce(id){
+  if(!confirm("Supprimer cette annonce ?"))return;
+  db.collection("annonces").doc(id).delete().then(function(){toast("Annonce supprimée.","success");loadAnnonces();}).catch(function(){toast("Erreur.","error");});
+}
+
+/* ══════════════════════════════
+   STATISTIQUES AMÉLIORÉES
+══════════════════════════════ */
+function setStatFilter(days){
+  statFilterDays=days;
+  document.querySelectorAll(".sf-btn").forEach(function(b){b.classList.remove("active");});
+  if(days>=0)document.getElementById("sf-"+days).classList.add("active");
+  loadStats();
+}
+
+function loadStats(){
+  var cutoff=null;
+  if(statFilterDays>0){
+    cutoff=new Date(Date.now()-statFilterDays*86400000);
+  } else if(statFilterDays===-1){
+    var from=document.getElementById("sfDateFrom").value;
+    var to=document.getElementById("sfDateTo").value;
+    if(from)cutoff=new Date(from);
+    if(to)cutoff._to=new Date(to);
+  }
+  var entries=0,sumT=0,sumH=0,sumP=0,cntT=0,cntH=0,cntP=0,minT=Infinity,maxT=-Infinity,minH=Infinity,maxH=-Infinity;
+  var tBkt={"<18":0,"18-22":0,"22-26":0,"26-30":0,"30-34":0,">34":0};
+  var hBkt={"<30%":0,"30-40%":0,"40-50%":0,"50-60%":0,"60-70%":0,">70%":0};
+  var decCount={},presPerDec={};
+  var trendPoints=[];
+  db.collection("historique").orderBy("timestamp","asc").get().then(function(snap){
+    snap.forEach(function(d){
+      var r=d.data();
+      var rowDate=r.timestamp?r.timestamp.toDate():null;
+      if(cutoff&&rowDate&&rowDate<cutoff)return;
+      if(cutoff&&cutoff._to&&rowDate&&rowDate>cutoff._to)return;
+      entries++;
+      var t=parseFloat(r.temperature),h=parseFloat(r.humidite),p=parseInt(r.personnes)||0;
+      var dec=r.decision||r.Decision||"Inconnu";
+      if(!isNaN(t)){sumT+=t;cntT++;if(t<minT)minT=t;if(t>maxT)maxT=t;
+        if(t<18)tBkt["<18"]++;else if(t<22)tBkt["18-22"]++;else if(t<26)tBkt["22-26"]++;else if(t<30)tBkt["26-30"]++;else if(t<34)tBkt["30-34"]++;else tBkt[">34"]++;}
+      if(!isNaN(h)){sumH+=h;cntH++;if(h<minH)minH=h;if(h>maxH)maxH=h;
+        if(h<30)hBkt["<30%"]++;else if(h<40)hBkt["30-40%"]++;else if(h<50)hBkt["40-50%"]++;else if(h<60)hBkt["50-60%"]++;else if(h<70)hBkt["60-70%"]++;else hBkt[">70%"]++;}
+      if(p>0){sumP+=p;cntP++;}
+      decCount[dec]=(decCount[dec]||0)+1;presPerDec[dec]=(presPerDec[dec]||0)+p;
+      if(!isNaN(t)&&!isNaN(h)&&rowDate)trendPoints.push({ts:rowDate,t:t,h:h,p:p,dec:dec});
+    });
+    cachedStats={rows:trendPoints.map(function(r){return{ts:r.ts.toLocaleDateString("fr-FR"),t:r.t,h:r.h,p:r.p,dec:r.dec};})};
+    document.getElementById("st-entries").textContent=entries;
+    document.getElementById("st-avgTemp").textContent=cntT?(sumT/cntT).toFixed(1)+"°C":"—";
+    document.getElementById("st-avgHum").textContent=cntH?(sumH/cntH).toFixed(1)+"%":"—";
+    document.getElementById("st-avgPers").textContent=cntP?(sumP/cntP).toFixed(1)+" pers.":"—";
+    document.getElementById("st-maxTemp").textContent=isFinite(maxT)?maxT.toFixed(1)+"°C":"—";
+    document.getElementById("st-minTemp").textContent=isFinite(minT)?minT.toFixed(1)+"°C":"—";
+    document.getElementById("st-tempRange").textContent=(isFinite(minT)&&isFinite(maxT))?"Min "+minT.toFixed(1)+"° · Max "+maxT.toFixed(1)+"°":"—";
+    document.getElementById("st-humRange").textContent=(isFinite(minH)&&isFinite(maxH))?"Min "+minH.toFixed(1)+"% · Max "+maxH.toFixed(1)+"%":"—";
+    document.getElementById("st-persRange").textContent=cntP?"Sur "+cntP+" sessions":"—";
+    var pts=trendPoints.slice(-50);
+    renderTrendChart("trendTempWrap",pts.map(function(p){return{val:p.t,label:p.ts}}),"#2563eb","°C");
+    renderTrendChart("trendHumWrap",pts.map(function(p){return{val:p.h,label:p.ts}}),"#06b6d4","%");
+    var tColors={"<18":"cyan","18-22":"green","22-26":"green","26-30":"orange","30-34":"orange",">34":"red"};
+    var maxTv=Math.max.apply(null,Object.values(tBkt))||1;
+    document.getElementById("tempBars").innerHTML=!entries?'<div class="loading">Aucune donnée.</div>':
+      Object.keys(tBkt).map(function(k){var cnt=tBkt[k],pct=Math.round(cnt/maxTv*100);return barHTML(k+"°C",cnt,pct,Math.round(cnt/(entries||1)*100)+"%",tColors[k]||"");}).join("");
+    var hColors={"<30%":"cyan","30-40%":"green","40-50%":"green","50-60%":"orange","60-70%":"orange",">70%":"red"};
+    var maxHv=Math.max.apply(null,Object.values(hBkt))||1;
+    document.getElementById("humBars").innerHTML=!entries?'<div class="loading">Aucune donnée.</div>':
+      Object.keys(hBkt).map(function(k){var cnt=hBkt[k],pct=Math.round(cnt/maxHv*100);return barHTML(k,cnt,pct,Math.round(cnt/(entries||1)*100)+"%",hColors[k]||"");}).join("");
+    var decKeys=Object.keys(decCount);
+    var decColors=["","purple","cyan","orange","green","red"];
+    var maxDv=Math.max.apply(null,decKeys.map(function(k){return decCount[k];})||[1])||1;
+    document.getElementById("decisionBars").innerHTML=!decKeys.length?'<div class="loading">Aucune décision.</div>':
+      decKeys.map(function(k,i){return barHTML(k,decCount[k],Math.round(decCount[k]/maxDv*100),"",decColors[i%decColors.length]);}).join("");
+    var maxPv=Math.max.apply(null,decKeys.map(function(k){return presPerDec[k];})||[1])||1;
+    document.getElementById("presenceBars").innerHTML=!decKeys.length?'<div class="loading">Aucune donnée.</div>':
+      decKeys.map(function(k){
+        var avg=(presPerDec[k]/(decCount[k]||1)).toFixed(1);
+        return barHTML(k,avg+" pers. moy.",Math.round(presPerDec[k]/maxPv*100),"Total: "+presPerDec[k],"green");
+      }).join("");
+  }).catch(function(){
+    ["tempBars","humBars","decisionBars","presenceBars","trendTempWrap","trendHumWrap"].forEach(function(id){document.getElementById(id).innerHTML='<div class="loading">Erreur.</div>';});
+  });
+}
+
+function renderTrendChart(wrapperId,pts,color,unit){
+  var wrap=document.getElementById(wrapperId);
+  if(!pts||pts.length<2){wrap.innerHTML='<div class="loading">Pas assez de données pour la courbe.</div>';return;}
+  var W=600,H=130,PL=40,PR=12,PT=12,PB=28;
+  var vals=pts.map(function(p){return p.val;});
+  var minV=Math.min.apply(null,vals),maxV=Math.max.apply(null,vals);
+  if(minV===maxV){minV-=1;maxV+=1;}
+  function sx(i){return PL+(i/(pts.length-1))*(W-PL-PR);}
+  function sy(v){return PT+(1-(v-minV)/(maxV-minV))*(H-PT-PB);}
+  var pathD=pts.map(function(p,i){return(i===0?"M":"L")+sx(i).toFixed(1)+","+sy(p.val).toFixed(1);}).join(" ");
+  var areaD=pathD+" L"+sx(pts.length-1).toFixed(1)+","+(H-PB)+" L"+sx(0).toFixed(1)+","+(H-PB)+" Z";
+  var gradId="grad-"+wrapperId;
+  var labelIdxs=[0,Math.floor(pts.length/2),pts.length-1];
+  var xLabels=labelIdxs.map(function(i){
+    var d=pts[i].label;
+    var s=d instanceof Date?d.toLocaleDateString("fr-FR",{day:"2-digit",month:"short"}):d.toLocaleDateString("fr-FR",{day:"2-digit",month:"short"});
+    return'<text x="'+sx(i).toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="var(--subtle)" font-family="Inter,sans-serif">'+s+'</text>';
+  }).join("");
+  var gridLines=[minV,((minV+maxV)/2),maxV].map(function(v){
+    return'<line x1="'+PL+'" y1="'+sy(v).toFixed(1)+'" x2="'+(W-PR)+'" y2="'+sy(v).toFixed(1)+'" stroke="var(--border)" stroke-width="1" stroke-dasharray="4,4"/>'+
+           '<text x="'+(PL-4)+'" y="'+sy(v).toFixed(1)+'" text-anchor="end" font-size="9" fill="var(--subtle)" dominant-baseline="middle" font-family="Inter,sans-serif">'+v.toFixed(1)+'</text>';
+  }).join("");
+  var lastX=sx(pts.length-1).toFixed(1);
+  var lastY=sy(pts[pts.length-1].val).toFixed(1);
+  var lastLabel='<circle cx="'+lastX+'" cy="'+lastY+'" r="5" fill="'+color+'" stroke="var(--surface)" stroke-width="2.5"/>'+
+    '<text x="'+(parseFloat(lastX)-6)+'" y="'+(parseFloat(lastY)-10)+'" text-anchor="end" font-size="9.5" fill="'+color+'" font-weight="700" font-family="Inter,sans-serif">'+pts[pts.length-1].val.toFixed(1)+unit+'</text>';
+  wrap.innerHTML=
+    '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">'+
+      '<defs>'+
+        '<linearGradient id="'+gradId+'" x1="0" y1="0" x2="0" y2="1">'+
+          '<stop offset="0%" stop-color="'+color+'" stop-opacity="0.2"/>'+
+          '<stop offset="100%" stop-color="'+color+'" stop-opacity="0.01"/>'+
+        '</linearGradient>'+
+      '</defs>'+
+      gridLines+
+      '<path d="'+areaD+'" fill="url(#'+gradId+')" />'+
+      '<path d="'+pathD+'" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'+
+      lastLabel+xLabels+
+    '</svg>';
+}
+
+function barHTML(lbl,val,pct,extra,cls){
+  return'<div class="stat-bar-wrap">'+
+    '<div class="stat-bar-hd"><span class="stat-bar-lbl">'+lbl+'</span>'+
+    '<div class="stat-bar-right">'+(extra?'<span class="stat-bar-pct">'+extra+'</span>':'')+
+    '<span class="stat-bar-val">'+val+'</span></div></div>'+
+    '<div class="stat-bar-bg"><div class="stat-bar-fill '+(cls||'')+'" style="width:'+pct+'%"></div></div></div>';
+}
+
+/* ══════════════════════════════
+   TYPING INDICATOR
+══════════════════════════════ */
+var typingTimeout=null;
+var typingUnsub=null;
+function onChatTyping(){
+  if(!activeGrpId) return;
+  var key=ME.replace(/[.#$[\]]/g,"_");
+  rtdb.ref("typing/"+activeGrpId+"/"+key).set({name:ME,ts:Date.now()});
+  clearTimeout(typingTimeout);
+  typingTimeout=setTimeout(function(){
+    rtdb.ref("typing/"+activeGrpId+"/"+key).remove();
+  },2500);
+}
+function listenTyping(gid){
+  if(typingUnsub) typingUnsub();
+  var ref=rtdb.ref("typing/"+gid);
+  var handler=ref.on("value",function(snap){
+    var indicator=document.getElementById("typingIndicator");
+    var nameEl=document.getElementById("typingName");
+    var data=snap.val();
+    if(!data){ indicator.classList.remove("visible"); return; }
+    var others=Object.values(data).filter(function(t){
+      return t.name!==ME && (Date.now()-t.ts)<4000;
+    });
+    if(!others.length){ indicator.classList.remove("visible"); return; }
+    nameEl.textContent=others.map(function(t){return t.name.split("@")[0];}).join(", ");
+    indicator.classList.add("visible");
+  });
+  typingUnsub=function(){ ref.off("value",handler); };
+}
+
+/* ══════════════════════════════
+   SCROLL TO BOTTOM
+══════════════════════════════ */
+var scrollUnreadCount=0;
+function setupScrollListener(){
+  if(scrollListenerSetup) return;
+  scrollListenerSetup=true;
+  var cont=document.getElementById("chatMessages");
+  var btn=document.getElementById("scrollBottomBtn");
+  cont.addEventListener("scroll",function(){
+    var atBottom=cont.scrollHeight-cont.scrollTop-cont.clientHeight<80;
+    btn.classList.toggle("visible",!atBottom);
+    if(atBottom){ scrollUnreadCount=0; updateScrollBadge(); }
+  });
+}
+function forceScrollBottom(){
+  var cont=document.getElementById("chatMessages");
+  cont.scrollTo({top:cont.scrollHeight,behavior:"smooth"});
+  scrollUnreadCount=0;
+  updateScrollBadge();
+  document.getElementById("scrollBottomBtn").classList.remove("visible");
+}
+function updateScrollBadge(){
+  var btn=document.getElementById("scrollBottomBtn");
+  var old=btn.querySelector(".unread-badge");
+  if(old) old.remove();
+  if(scrollUnreadCount>0){
+    var badge=document.createElement("div");
+    badge.className="unread-badge";
+    badge.textContent=scrollUnreadCount>9?"9+":scrollUnreadCount;
+    btn.appendChild(badge);
+  }
+}
+
+/* ══════════════════════════════
+   FILTRE CONVERSATIONS
+══════════════════════════════ */
+function filterConversations(q){
+  q=(q||"").toLowerCase();
+  var groups=document.querySelectorAll(".group-item");
+  var dms=document.querySelectorAll(".dm-item");
+  groups.forEach(function(g){
+    var name=g.querySelector(".grp-name")?.innerText.toLowerCase()||"";
+    g.style.display=name.includes(q)?"flex":"none";
+  });
+  dms.forEach(function(d){
+    var name=d.querySelector(".grp-name")?.innerText.toLowerCase()||"";
+    d.style.display=name.includes(q)?"flex":"none";
+  });
+}
+
+/* ══════════════════════════════
+   FORCE DU MOT DE PASSE
+══════════════════════════════ */
+function updatePassStrength(val){
+  var wrap=document.getElementById("passStrengthWrap");
+  var fill=document.getElementById("passStrengthFill");
+  var lbl=document.getElementById("passStrengthLbl");
+  if(!val){ wrap.style.display="none"; return; }
+  wrap.style.display="block";
+  var score=0;
+  if(val.length>=6) score++;
+  if(val.length>=10) score++;
+  if(/[A-Z]/.test(val)) score++;
+  if(/[0-9]/.test(val)) score++;
+  if(/[^A-Za-z0-9]/.test(val)) score++;
+  var levels=[
+    {pct:"20%",bg:"#ef4444",txt:"Très faible"},
+    {pct:"40%",bg:"#f97316",txt:"Faible"},
+    {pct:"60%",bg:"#f59e0b",txt:"Moyen"},
+    {pct:"80%",bg:"#84cc16",txt:"Fort"},
+    {pct:"100%",bg:"#10b981",txt:"Très fort"}
+  ];
+  var lvl=levels[Math.max(0,Math.min(4,score-1))];
+  fill.style.width=lvl.pct;
+  fill.style.background=lvl.bg;
+  lbl.textContent=lvl.txt;
+  lbl.style.color=lvl.bg;
+}
+
+/* ══════════════════════════════
+   COMPTEUR DE CARACTÈRES
+══════════════════════════════ */
+function updateCharCounter(inputId,counterId,max){
+  var el=document.getElementById(inputId);
+  var counter=document.getElementById(counterId);
+  if(!el||!counter) return;
+  var len=el.value.length;
+  counter.textContent=len+" / "+max;
+  counter.className="char-counter";
+  if(len>max*0.9) counter.classList.add("warn");
+  if(len>max) counter.classList.add("over");
+}
+
+/* ══════════════════════════════
+   LOGOUT
+══════════════════════════════ */
+function logout(){
+  rtdb.ref("online/"+myKey).remove();
+  sessionStorage.clear();
+  window.location.href="login.html";
+}
+
+/* ══════════════════════════════
+   INIT LOAD
+══════════════════════════════ */
+loadUsers();
+loadSettings();
+requestNotifPermission();
+
+/* ══════════════════════════════
+   FERMETURE MODAL AU CLIC EXTERNE
+══════════════════════════════ */
+document.querySelectorAll(".overlay").forEach(function(overlay){
+  overlay.addEventListener("click",function(e){
+    if(e.target===overlay) overlay.classList.remove("open");
+  });
+});
+</script>
+</body>
+</html>

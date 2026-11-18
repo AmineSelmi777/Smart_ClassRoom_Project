@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — Smart Classroom</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+/* ═══════════════════════════════════════════════════════
+   RESET & BASE - Version apaisante
+════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ═══════════════════════════════════════════════════════
+   THÈMES - Palette naturelle (sauge + bleu océan)
+════════════════════════════════════════════════════════ */
+:root {
+  --primary: #1e6f5c;
+  --primary-dark: #165a4a;
+  --primary-light: #e6f4f0;
+  --primary-glow: rgba(30, 111, 92, 0.12);
+  --secondary: #3b82f6;
+  --secondary-light: #eef2ff;
+  --bg: #f0f4f8;
+  --bg2: #e8edf3;
+  --surface: #ffffff;
+  --surface2: #f8fafc;
+  --text: #1e293b;
+  --text2: #334155;
+  --muted: #64748b;
+  --subtle: #94a3b8;
+  --border: #e2e8f0;
+  --border2: #cbd5e1;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --success: #10b981;
+  --success-light: #ecfdf5;
+  --danger: #ef4444;
+  --danger-light: #fef2f2;
+  --warning: #f59e0b;
+  --warning-light: #fffbeb;
+  --info: #3b82f6;
+  --info-light: #eff6ff;
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.04);
+  --shadow: 0 2px 8px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.03);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.06), 0 2px 6px rgba(0,0,0,.04);
+  --shadow-xl: 0 20px 40px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.04);
+  --header-h: 64px;
+  --header-bg: linear-gradient(135deg, #1a3a32 0%, #1e5a4a 50%, #3b82f6 100%);
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --bg2: #1a2540;
+  --surface: #1e293b;
+  --surface2: #162036;
+  --text: #f1f5f9;
+  --text2: #cbd5e1;
+  --muted: #94a3b8;
+  --subtle: #64748b;
+  --border: #2d3a5e;
+  --border2: #3b4a6e;
+  --primary-light: #1a3a3a;
+  --primary-glow: rgba(30, 111, 92, 0.2);
+  --secondary-light: #1e2a3a;
+  --success-light: #052e16;
+  --danger-light: #2d0a0a;
+  --warning-light: #291a00;
+  --info-light: #11223b;
+  --shadow: 0 2px 8px rgba(0,0,0,.2), 0 1px 2px rgba(0,0,0,.15);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.3), 0 2px 6px rgba(0,0,0,.2);
+  --shadow-xl: 0 20px 40px rgba(0,0,0,.35), 0 4px 12px rgba(0,0,0,.25);
+  --header-bg: linear-gradient(135deg, #0a1a16 0%, #0d2a24 50%, #1e3a5f 100%);
+}
+
+/* Scrollbar personnalisée */
+::-webkit-scrollbar { width: 6px; height: 6px }
+::-webkit-scrollbar-track { background: transparent }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 100px }
+
+html, body { height: 100% }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* ═══════════════════════════════════════════════════════
+   HEADER
+════════════════════════════════════════════════════════ */
+.app-header {
+  background: var(--header-bg);
+  color: #fff;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 300;
+  box-shadow: 0 2px 12px rgba(0,0,0,.15);
+}
+.h-brand { display: flex; align-items: center; gap: 12px; flex-shrink: 0 }
+.h-icon {
+  width: 40px; height: 40px;
+  background: rgba(255,255,255,.12);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.h-title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px }
+.h-sub { font-size: 10px; opacity: 0.6; font-weight: 500; margin-top: 2px }
+.h-right { display: flex; align-items: center; gap: 8px }
+.h-btn {
+  background: rgba(255,255,255,.1);
+  border: none;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 40px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: var(--transition);
+}
+.h-btn:hover { background: rgba(255,255,255,.2); transform: translateY(-1px) }
+.h-logout { background: rgba(239,68,68,.15) }
+.h-logout:hover { background: rgba(239,68,68,.3) }
+.hamburger {
+  display: none;
+  background: rgba(255,255,255,.1);
+  border: none;
+  color: #fff;
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  cursor: pointer;
+  align-items: center; justify-content: center;
+  font-size: 18px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LAYOUT PRINCIPAL
+════════════════════════════════════════════════════════ */
+.app-body { display: flex; flex: 1; overflow: hidden; position: relative }
+
+/* ═══════════════════════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════════════════════════ */
+.sidebar {
+  width: 280px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: sticky; top: var(--header-h);
+  height: calc(100vh - var(--header-h));
+  overflow-y: auto;
+  flex-shrink: 0;
+  transition: transform 0.25s;
+}
+.sb-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 199;
+  backdrop-filter: blur(3px);
+}
+.sb-section { padding: 20px 16px 8px }
+.sb-label {
+  font-size: 10px; font-weight: 700; color: var(--subtle);
+  text-transform: uppercase; letter-spacing: 1px;
+  padding: 0 8px; margin-bottom: 8px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13.5px; font-weight: 500; color: var(--muted);
+  transition: var(--transition);
+  width: 100%; text-align: left;
+  background: none; border: none;
+  font-family: 'Inter', sans-serif;
+}
+.nav-item:hover { background: var(--bg); color: var(--text); padding-left: 20px }
+.nav-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600 }
+.nav-ic { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0 }
+.n-badge { margin-left: auto; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 40px }
+.nb-blue { background: var(--primary-light); color: var(--primary) }
+.sb-div { height: 1px; background: var(--border); margin: 12px 16px }
+.sb-footer { margin-top: auto; padding: 16px; border-top: 1px solid var(--border) }
+.sb-user {
+  background: var(--bg);
+  border-radius: 12px; padding: 12px;
+  display: flex; align-items: center; gap: 12px;
+  border: 1px solid var(--border);
+}
+.ava {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 16px; font-weight: 700;
+}
+.ava-email { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px }
+.ava-role { font-size: 11px; color: var(--primary); font-weight: 600 }
+
+/* ═══════════════════════════════════════════════════════
+   MAIN CONTENT
+════════════════════════════════════════════════════════ */
+.main-content { flex: 1; padding: 28px 32px; overflow-y: auto }
+.page { display: none }
+.page.active { display: block; animation: fadeUp 0.3s ease }
+@keyframes fadeUp { 
+  from { opacity: 0; transform: translateY(10px) } 
+  to { opacity: 1; transform: translateY(0) } 
+}
+.pg-title { font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 6px; letter-spacing: -0.5px }
+.pg-sub { font-size: 13.5px; color: var(--muted); margin-bottom: 28px; border-left: 3px solid var(--primary); padding-left: 12px }
+
+/* ═══════════════════════════════════════════════════════
+   STATS CARDS
+════════════════════════════════════════════════════════ */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px }
+.s-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex; align-items: center; gap: 14px;
+  transition: var(--transition);
+}
+.s-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px) }
+.s-ic {
+  width: 52px; height: 52px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.ic-b { background: var(--primary-light); color: var(--primary) }
+.ic-g { background: var(--success-light); color: var(--success) }
+.ic-o { background: var(--warning-light); color: var(--warning) }
+.ic-p { background: var(--info-light); color: var(--info) }
+.s-num { font-size: 32px; font-weight: 800; color: var(--text); line-height: 1; letter-spacing: -1px }
+.s-lbl { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px }
+
+/* ═══════════════════════════════════════════════════════
+   CARTES GÉNÉRIQUES
+════════════════════════════════════════════════════════ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 24px;
+}
+.card-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+}
+.card-ttl {
+  font-size: 15px; font-weight: 700; color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   FORMULAIRES
+════════════════════════════════════════════════════════ */
+.note {
+  background: var(--primary-light);
+  border-left: 4px solid var(--primary);
+  padding: 12px 16px; border-radius: 8px;
+  font-size: 13px; color: var(--primary); margin-bottom: 24px;
+}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr 180px; gap: 16px; align-items: end }
+.fg { display: flex; flex-direction: column; gap: 6px }
+.fg label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px }
+.fg input, .fg select, .fg textarea {
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13.5px; font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: var(--transition);
+  color: var(--text); background: var(--surface);
+}
+.fg input:focus, .fg select:focus, .fg textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+.pw-wrap { position: relative }
+.pw-wrap input { padding-right: 44px }
+.eye-btn { 
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; font-size: 14px; color: var(--muted);
+}
+.btn-gen { font-size: 11px; background: none; border: none; color: var(--primary); cursor: pointer; margin-top: 4px; text-align: left; font-weight: 500 }
+.hint { font-size: 11px; color: var(--subtle); margin-top: 4px }
+
+/* ═══════════════════════════════════════════════════════
+   BOUTONS
+════════════════════════════════════════════════════════ */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px;
+  border-radius: 40px;
+  font-size: 13px; font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer; border: none;
+  transition: var(--transition);
+}
+.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 8px var(--primary-glow); }
+.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); scale: 1.02; }
+.btn-primary:disabled { background: var(--subtle); cursor: not-allowed; }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1.5px solid var(--border) }
+.btn-secondary:hover { background: var(--bg); border-color: var(--primary); }
+.btn-danger { background: var(--danger-light); color: var(--danger); border: 1px solid rgba(239,68,68,.2) }
+.btn-danger:hover { background: #fecaca; transform: translateY(-1px); }
+.btn-success { background: var(--success-light); color: #166534; border: 1px solid rgba(16,185,129,.2) }
+.btn-sm { padding: 6px 14px; font-size: 12px; border-radius: 40px }
+
+/* ═══════════════════════════════════════════════════════
+   TABLEAUX
+════════════════════════════════════════════════════════ */
+.tbl-toolbar {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px; gap: 12px; flex-wrap: wrap;
+}
+.srch { position: relative; flex: 1; min-width: 220px }
+.srch input {
+  width: 100%; padding: 10px 16px 10px 42px;
+  border: 1.5px solid var(--border);
+  border-radius: 40px;
+  font-size: 13.5px;
+  outline: none;
+  color: var(--text); background: var(--surface);
+}
+.srch input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow) }
+.srch-ic { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--subtle); font-size: 14px }
+.filter-sel {
+  padding: 10px 16px;
+  border: 1.5px solid var(--border); border-radius: 40px;
+  font-size: 13px;
+  outline: none; color: var(--text); background: var(--surface); cursor: pointer;
+}
+
+table { width: 100%; border-collapse: collapse }
+thead tr { background: var(--surface2); border-bottom: 2px solid var(--border); border-radius: 12px }
+thead th { padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 700; color: var(--subtle); text-transform: uppercase; letter-spacing: 0.8px }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s }
+tbody tr:hover { background: var(--surface2) }
+tbody td { padding: 14px 16px; font-size: 13.5px; vertical-align: middle }
+.u-ava {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 13px; font-weight: 600; margin-right: 10px;
+}
+.role-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 40px }
+.role-admin { background: var(--primary-light); color: var(--primary); }
+.role-user { background: var(--success-light); color: #166534; }
+[data-theme="dark"] .role-user { background: #064e3b; color: #34d399; }
+.act-btns { display: flex; gap: 8px; flex-wrap: wrap }
+.tbl-empty { text-align: center; padding: 48px 20px; color: var(--subtle); font-size: 14px }
+
+/* ═══════════════════════════════════════════════════════
+   PAGINATION
+════════════════════════════════════════════════════════ */
+.pagi { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; flex-wrap: wrap; gap: 12px }
+.pg-info { font-size: 13px; color: var(--muted) }
+.pg-btns { display: flex; gap: 6px }
+.pg-btn {
+  padding: 7px 14px; border: 1.5px solid var(--border);
+  border-radius: 40px; background: var(--surface); color: var(--muted);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.pg-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light) }
+.pg-btn.active { background: var(--primary); color: #fff; border-color: var(--primary) }
+.pg-btn:disabled { opacity: 0.4; cursor: not-allowed }
+
+/* ═══════════════════════════════════════════════════════
+   MODALES
+════════════════════════════════════════════════════════ */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 900;
+  justify-content: center; align-items: center;
+  backdrop-filter: blur(4px);
+}
+.overlay.open { display: flex; animation: overlayIn 0.2s ease }
+@keyframes overlayIn { from { opacity: 0 } to { opacity: 1 } }
+.modal {
+  background: var(--surface);
+  border-radius: 24px; padding: 28px;
+  box-shadow: var(--shadow-xl);
+  width: min(480px, 92vw);
+  max-height: 85vh; overflow-y: auto;
+  animation: modalIn 0.25s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+@keyframes modalIn { 
+  from { opacity: 0; transform: scale(0.95) translateY(8px) } 
+  to { opacity: 1; transform: scale(1) translateY(0) } 
+}
+.modal h4 { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: var(--text) }
+.modal .m-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px }
+.m-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px }
+.m-field label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px }
+.m-field input, .m-field select {
+  padding: 11px 14px; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); font-size: 13.5px;
+  outline: none; color: var(--text); width: 100%; background: var(--surface);
+}
+.m-field input:focus, .m-field select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+.m-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end }
+.btn-cancel {
+  background: var(--surface2); color: var(--muted); border: 1.5px solid var(--border);
+  padding: 10px 20px; border-radius: 40px; cursor: pointer;
+  font-size: 13px; font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════
+   NOTIFICATIONS
+════════════════════════════════════════════════════════ */
+.notif-type-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px }
+.notif-type-btn {
+  background: var(--surface2); border: 1.5px solid var(--border);
+  border-radius: 16px; padding: 16px 12px; cursor: pointer;
+  text-align: center; transition: var(--transition);
+}
+.notif-type-btn.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+.notif-type-btn .nb-icon { font-size: 28px; display: block; margin-bottom: 8px }
+.notif-type-btn .nb-lbl { font-size: 13px; font-weight: 600 }
+.notif-history { display: flex; flex-direction: column; gap: 10px; margin-top: 8px }
+.nh-item {
+  background: var(--bg); border-radius: 12px;
+  padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px;
+  border: 1px solid var(--border);
+}
+.nh-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 6px }
+.nh-dot.ok { background: var(--success) }
+.nh-dot.fail { background: var(--danger) }
+.nh-body { flex: 1 }
+.nh-to { font-size: 13px; font-weight: 700; color: var(--text) }
+.nh-time { font-size: 11px; color: var(--subtle); margin-top: 4px }
+
+/* ═══════════════════════════════════════════════════════
+   JOURNAUX
+════════════════════════════════════════════════════════ */
+.log-item { display: flex; align-items: flex-start; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--border) }
+.log-item:last-child { border-bottom: none }
+.log-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.log-dot.add { background: var(--success) }
+.log-dot.del { background: var(--danger) }
+.log-dot.edit { background: var(--warning) }
+.log-dot.pass { background: var(--info) }
+.log-dot.notif { background: var(--primary) }
+.log-msg { font-size: 13.5px; font-weight: 500; color: var(--text) }
+.log-who { font-size: 11.5px; color: var(--primary); font-weight: 600; margin-top: 4px }
+.log-time { font-size: 11px; color: var(--subtle); margin-top: 2px }
+
+/* ═══════════════════════════════════════════════════════
+   TOAST NOTIFICATIONS
+════════════════════════════════════════════════════════ */
+.toast-wrap { position: fixed; top: 80px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px }
+.toast {
+  padding: 14px 20px; border-radius: 40px;
+  color: #fff; font-size: 13px; font-weight: 500;
+  min-width: 260px; max-width: 360px;
+  box-shadow: var(--shadow-lg);
+  animation: slideIn 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
+  display: flex; align-items: center; gap: 10px;
+}
+.toast::after {
+  content: ''; position: absolute; bottom: 0; left: 0;
+  height: 3px; background: rgba(255,255,255,.4);
+  width: 100%; border-radius: 0 0 40px 40px;
+  animation: toastProgress 3.5s linear forwards;
+}
+@keyframes toastProgress { from { width: 100% } to { width: 0% } }
+.toast.success { background: #0d9966 }
+.toast.error { background: #dc2626 }
+.toast.info { background: var(--primary) }
+@keyframes slideIn { from { transform: translateX(110%) scale(0.9); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════════════════ */
+@media (max-width: 1000px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr) }
+  .form-grid { grid-template-columns: 1fr 1fr }
+}
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed; top: var(--header-h); left: 0;
+    height: calc(100vh - var(--header-h));
+    z-index: 200; transform: translateX(-100%);
+  }
+  .sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,.2) }
+  .sb-overlay.open { display: block }
+  .hamburger { display: flex }
+  .stats-row { grid-template-columns: 1fr }
+  .form-grid { grid-template-columns: 1fr }
+  .main-content { padding: 20px }
+  .pg-title { font-size: 20px }
+  .notif-type-grid { grid-template-columns: repeat(2, 1fr) }
+}
+@media (max-width: 480px) {
+  .h-right .h-btn span { display: none }
+  .h-right .h-btn { padding: 8px 12px }
+}
+</style>
+</head>
+<body>
+
+<script>
+(function(){
+  var role = sessionStorage.getItem("role");
+  var user = sessionStorage.getItem("user");
+  if(!user){
+    alert("❌ Vous devez vous connecter.");
+    window.location.href="login.html";
+    return;
+  }
+  if(role !== "admin"){
+    alert("⛔ Accès réservé aux administrateurs.");
+    window.location.href="dashboard.html";
+  }
+})();
+</script>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- MODALES -->
+<div class="overlay" id="mRole">
+  <div class="modal">
+    <h4>✏️ Modifier le rôle</h4>
+    <p class="m-sub" id="mRoleEmail">—</p>
+    <div class="m-field">
+      <label>Nouveau rôle</label>
+      <select id="mRoleSel">
+        <option value="user">👤 Utilisateur</option>
+        <option value="admin">🛡️ Administrateur</option>
+      </select>
+    </div>
+    <div class="m-actions">
+      <button class="btn-cancel" onclick="closeM('mRole')">Annuler</button>
+      <button class="btn btn-primary btn-sm" onclick="saveRole()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="mPass">
+  <div class="modal">
+    <h4>🔑 Changer le mot de passe</h4>
+    <p class="m-sub" id="mPassEmail">—</p>
+    <div class="m-field">
+      <label>Nouveau mot de passe</label>
+      <input type="text" id="mPassVal" placeholder="Nouveau code d'accès">
+    </div>
+    <div class="m-actions">
+      <button class="btn-cancel" onclick="closeM('mPass')">Annuler</button>
+      <button class="btn btn-primary btn-sm" onclick="savePass()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="h-brand">
+    <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()">☰</button>
+    <div class="h-icon">🎓</div>
+    <div>
+      <div class="h-title">Smart Classroom</div>
+      <div class="h-sub">Administration</div>
+    </div>
+  </div>
+  <div class="h-right">
+    <button class="h-btn" onclick="toggleDark()" id="darkBtn">🌙</button>
+    <span class="h-btn" id="hEmail" style="cursor:default;font-size:12px">—</span>
+    <a href="historique.html" class="h-btn">📜 Historique</a>
+    <button class="h-btn h-logout" onclick="logout()">🚪</button>
+  </div>
+</header>
+
+<div class="sb-overlay" id="sbOverlay" onclick="toggleSidebar()"></div>
+
+<div class="app-body">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="mainSidebar">
+  <div class="sb-section">
+    <div class="sb-label">Principal</div>
+    <button class="nav-item active" id="nav-overview" onclick="sp('overview')"><span class="nav-ic">📊</span>Vue d'ensemble</button>
+    <button class="nav-item" id="nav-list" onclick="sp('list')"><span class="nav-ic">👥</span>Comptes<span class="n-badge nb-blue" id="sbCount">0</span></button>
+    <button class="nav-item" id="nav-add" onclick="sp('add')"><span class="nav-ic">➕</span>Ajouter un compte</button>
+  </div>
+  <div class="sb-div"></div>
+  <div class="sb-section">
+    <div class="sb-label">Communication</div>
+    <button class="nav-item" id="nav-notif" onclick="sp('notif')"><span class="nav-ic">📧</span>Notifications</button>
+  </div>
+  <div class="sb-div"></div>
+  <div class="sb-section">
+    <div class="sb-label">Supervision</div>
+    <button class="nav-item" id="nav-activity" onclick="sp('activity')"><span class="nav-ic">📜</span>Journal</button>
+  </div>
+  <div class="sb-div"></div>
+  <div class="sb-section">
+    <div class="sb-label">Système</div>
+    <button class="nav-item" id="nav-settings" onclick="sp('settings')"><span class="nav-ic">⚙️</span>Paramètres</button>
+  </div>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="ava" id="sbAva">A</div>
+      <div>
+        <div class="ava-email" id="sbEmail">—</div>
+        <div class="ava-role">Administrateur</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content" id="mainContent">
+
+<!-- ▸ VUE D'ENSEMBLE -->
+<div class="page active" id="page-overview">
+  <div class="pg-title">📊 Vue d'ensemble</div>
+  <div class="pg-sub">Gestion des comptes utilisateurs</div>
+
+  <div class="stats-row">
+    <div class="s-card"><div class="s-ic ic-b">👥</div><div><div class="s-num" id="stTotal">—</div><div class="s-lbl">Total comptes</div></div></div>
+    <div class="s-card"><div class="s-ic ic-o">🛡️</div><div><div class="s-num" id="stAdmins">—</div><div class="s-lbl">Administrateurs</div></div></div>
+    <div class="s-card"><div class="s-ic ic-g">👤</div><div><div class="s-num" id="stUsers">—</div><div class="s-lbl">Utilisateurs</div></div></div>
+    <div class="s-card"><div class="s-ic ic-p">📧</div><div><div class="s-num" id="stNotif">0</div><div class="s-lbl">Notifications</div></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-ttl">👥 Aperçu des comptes</div>
+      <button class="btn btn-secondary btn-sm" onclick="sp('list')">Voir tous →</button>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>Compte</th><th>Rôle</th><th>Actions rapides</th></tr></thead>
+      <tbody id="prevList"><tr><td colspan="4" class="tbl-empty">Chargement…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ▸ LISTE -->
+<div class="page" id="page-list">
+  <div class="pg-title">👥 Liste des comptes</div>
+  <div class="pg-sub"><span id="totalCount">0</span> compte(s) enregistré(s)</div>
+  <div class="card">
+    <div class="tbl-toolbar">
+      <div class="srch"><span class="srch-ic">🔍</span><input type="text" id="searchBar" placeholder="Rechercher par email…" oninput="filterAndRender()"></div>
+      <select class="filter-sel" id="roleFilter" onchange="filterAndRender()">
+        <option value="">Tous les rôles</option>
+        <option value="admin">🛡️ Admins</option>
+        <option value="user">👤 Users</option>
+      </select>
+      <button class="btn btn-success btn-sm" onclick="exportUsersCSV()">⬇️ CSV</button>
+    </div>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Compte</th><th>Rôle</th><th>Dernière connexion</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="userTbody">
+        <tr><td colspan="5" class="tbl-empty">Chargement…</td></tr>
+      </tbody>
+    </table>
+    <div class="pagi">
+      <div class="pg-info" id="pgInfo">—</div>
+      <div class="pg-btns" id="pgBtns"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ▸ AJOUTER -->
+<div class="page" id="page-add">
+  <div class="pg-title">➕ Ajouter un compte</div>
+  <div class="pg-sub">Créez un nouvel accès avec envoi automatique des identifiants par email</div>
+  <div class="card">
+    <div class="note">📧 Un email avec les identifiants sera envoyé automatiquement dès la création du compte.</div>
+    <div class="form-grid">
+      <div class="fg">
+        <label>Adresse email</label>
+        <input type="email" id="nEmail" placeholder="exemple@email.com">
+        <span class="hint" id="emailError" style="color:var(--danger);display:none">⚠️ Cet email est déjà utilisé</span>
+      </div>
+      <div class="fg">
+        <label>Mot de passe</label>
+        <div class="pw-wrap">
+          <input type="text" id="nPass" placeholder="Code d'accès">
+          <button class="eye-btn" onclick="togglePassAdd()">👁️</button>
+        </div>
+        <button class="btn-gen" onclick="generatePassword()">⚡ Générer code numérique (8 chiffres)</button>
+      </div>
+      <div class="fg">
+        <label>Rôle</label>
+        <select id="nRole">
+          <option value="user">👤 Utilisateur</option>
+          <option value="admin">🛡️ Administrateur</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" id="addBtn" onclick="addUser()">✅ Créer et envoyer l'email</button>
+      <button class="btn btn-secondary" onclick="clearAddForm()">Réinitialiser</button>
+    </div>
+  </div>
+</div>
+
+<!-- ▸ NOTIFICATIONS EMAIL -->
+<div class="page" id="page-notif">
+  <div class="pg-title">📧 Notifications email</div>
+  <div class="pg-sub">Envoyez des messages email à vos utilisateurs</div>
+  <div class="card">
+    <div class="card-hd"><div class="card-ttl">Destinataires</div></div>
+    <div class="notif-type-grid">
+      <button class="notif-type-btn selected" id="nt-all" onclick="selectNType('all')"><span class="nb-icon">👥</span><span class="nb-lbl">Tous</span><span class="nb-cnt" id="nc-all">0</span></button>
+      <button class="notif-type-btn" id="nt-admins" onclick="selectNType('admins')"><span class="nb-icon">🛡️</span><span class="nb-lbl">Admins</span><span class="nb-cnt" id="nc-admins">0</span></button>
+      <button class="notif-type-btn" id="nt-users" onclick="selectNType('users')"><span class="nb-icon">👤</span><span class="nb-lbl">Utilisateurs</span><span class="nb-cnt" id="nc-users">0</span></button>
+      <button class="notif-type-btn" id="nt-one" onclick="selectNType('one')"><span class="nb-icon">🎯</span><span class="nb-lbl">Spécifique</span></button>
+    </div>
+    <div class="fg" id="oneEmailWrap" style="display:none;margin-bottom:14px">
+      <label>Email du destinataire</label>
+      <select id="oneEmailSel" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;">
+        <option value="">— Choisir un utilisateur —</option>
+      </select>
+    </div>
+    <div class="fg" style="margin-bottom:13px"><label>Objet</label><input type="text" id="nSubject" placeholder="ex : Maintenance prévue ce soir"></div>
+    <div class="fg" style="margin-bottom:20px">
+      <label>Message</label>
+      <textarea id="nMessage" placeholder="Rédigez votre message ici…" style="min-height:110px"></textarea>
+    </div>
+    <button class="btn btn-primary" id="sendNotifBtn" onclick="sendNotification()">📤 Envoyer la notification</button>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-ttl">📨 Historique des envois</div>
+      <button class="btn btn-secondary btn-sm" onclick="clearNotifHistory()">🗑️ Effacer</button>
+    </div>
+    <div id="notifHistory"><div class="log-empty">Aucune notification envoyée pour l'instant.</div></div>
+  </div>
+</div>
+
+<!-- ▸ JOURNAL -->
+<div class="page" id="page-activity">
+  <div class="pg-title">📜 Journal d'activité</div>
+  <div class="pg-sub">Historique persistant de toutes les actions administratives</div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-ttl">Actions enregistrées</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-success btn-sm" onclick="exportActivityCSV()">⬇️ CSV</button>
+        <button class="btn btn-secondary btn-sm" onclick="clearActivityLog()">🗑️ Effacer</button>
+      </div>
+    </div>
+    <div id="activityLog"><div class="log-empty">Chargement…</div></div>
+  </div>
+</div>
+
+<!-- ▸ PARAMÈTRES -->
+<div class="page" id="page-settings">
+  <div class="pg-title">⚙️ Paramètres système</div>
+  <div class="pg-sub">Configurez les seuils d'alerte</div>
+  <div class="save-bar" style="background:var(--primary-light);border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;margin-bottom:20px">
+    <p>💡 Ces paramètres sont sauvegardés dans Firebase.</p>
+    <button class="btn btn-primary btn-sm" onclick="saveSettings()">💾 Enregistrer</button>
+  </div>
+  <div class="sett-grid" style="display:grid;grid-template-columns:1fr;gap:16px;max-width:600px">
+    <div class="sett-item" style="background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:20px">
+      <div class="sett-lbl" style="font-size:13px;font-weight:800">🌡️ Température maximale</div>
+      <div class="sett-desc" style="font-size:12px;color:var(--muted);margin-bottom:12px">Alerte critique si dépassé</div>
+      <div class="sett-row" style="display:flex;align-items:center;gap:8px"><input class="sett-inp" type="number" id="s-tMax" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px"><span class="sett-unit">°C</span></div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   CONFIGURATION FIREBASE & EMAILJS
+═══════════════════════════════════════════════════════ */
+var firebaseConfig = {
+  apiKey: "AIzaSyCnTQ4wiPX6_N6EZ9ew53jl3VXIVmetrYQ",
+  authDomain: "smartclassroomai-f4ffe.firebaseapp.com",
+  databaseURL: "https://smartclassroomai-f4ffe-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "smartclassroomai-f4ffe",
+  storageBucket: "smartclassroomai-f4ffe.firebasestorage.app",
+  messagingSenderId: "775061606543",
+  appId: "1:775061606543:web:0f0b5c9dd8ebcf61aae0fa"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+var db = firebase.firestore();
+var rtdb = firebase.database();
+
+/* CONFIGURATION EMAILJS */
+var EJS_SVC = "service_hqjrt9c";
+var EJS_TPL_ACCOUNT = "template_lh2wx29";
+var EJS_TPL_NOTIF = "template_tu73nb6";
+var EJS_KEY = "MTMR3YPYQ6FVlZT2O";
+
+emailjs.init(EJS_KEY);
+
+/* ═══════════════════════════════════════════════════════
+   FONCTIONS D'ENVOI D'EMAIL
+═══════════════════════════════════════════════════════ */
+
+var LOGIN_URL = "https://smartclassroomai-ae608.web.app/login.html";
+
+// Email de création de compte
+async function sendCreationEmail(toEmail, password, role) {
+  var userName = toEmail.split('@')[0];
+  var roleName = role === "admin" ? "Administrateur" : "Utilisateur";
+  var roleIcon = role === "admin" ? "🛡️" : "👤";
+  
+  var templateParams = {
+    to_email: toEmail,
+    userName: userName,
+    bgColor: "linear-gradient(135deg, #1e6f5c, #3b82f6)",
+    actionIcon: "🎓",
+    actionTitle: "Bienvenue sur Smart Classroom",
+    actionMessage: "Un administrateur vous a créé un compte. Voici vos identifiants :",
+    footerMessage: "Si vous n'êtes pas à l'origine de cette demande, veuillez ignorer cet email.",
+    loginUrl: LOGIN_URL,
+    password: password,
+    roleName: roleName,
+    roleIcon: roleIcon,
+    roleChange: "",
+    oldRoleName: "",
+    newRoleName: "",
+    oldRoleIcon: "",
+    newRoleIcon: ""
+  };
+  
+  return emailjs.send(EJS_SVC, EJS_TPL_ACCOUNT, templateParams);
+}
+
+// Email de changement de rôle
+async function sendRoleChangeEmail(toEmail, oldRole, newRole) {
+  var userName = toEmail.split('@')[0];
+  var oldRoleName = oldRole === "admin" ? "Administrateur" : "Utilisateur";
+  var newRoleName = newRole === "admin" ? "Administrateur" : "Utilisateur";
+  var oldRoleIcon = oldRole === "admin" ? "🛡️" : "👤";
+  var newRoleIcon = newRole === "admin" ? "🛡️" : "👤";
+  
+  var templateParams = {
+    to_email: toEmail,
+    userName: userName,
+    bgColor: "linear-gradient(135deg, #f59e0b, #ea580c)",
+    actionIcon: "🔄",
+    actionTitle: "Changement de rôle",
+    actionMessage: "Votre rôle sur Smart Classroom a été modifié :",
+    footerMessage: "Déconnectez-vous et reconnectez-vous pour appliquer les changements.",
+    loginUrl: "",
+    password: "",
+    roleName: "",
+    roleIcon: "",
+    roleChange: "true",
+    oldRoleName: oldRoleName,
+    newRoleName: newRoleName,
+    oldRoleIcon: oldRoleIcon,
+    newRoleIcon: newRoleIcon
+  };
+  
+  return emailjs.send(EJS_SVC, EJS_TPL_ACCOUNT, templateParams);
+}
+
+// Email de changement de mot de passe
+async function sendPasswordChangeEmail(toEmail, newPassword) {
+  var userName = toEmail.split('@')[0];
+  
+  var templateParams = {
+    to_email: toEmail,
+    userName: userName,
+    bgColor: "linear-gradient(135deg, #10b981, #059669)",
+    actionIcon: "🔐",
+    actionTitle: "Changement de mot de passe",
+    actionMessage: "Votre mot de passe a été réinitialisé par un administrateur.",
+    footerMessage: "Nous vous recommandons de changer ce mot de passe lors de votre prochaine connexion.",
+    loginUrl: "",
+    password: newPassword,
+    roleName: "",
+    roleIcon: "",
+    roleChange: "",
+    oldRoleName: "",
+    newRoleName: "",
+    oldRoleIcon: "",
+    newRoleIcon: ""
+  };
+  
+  return emailjs.send(EJS_SVC, EJS_TPL_ACCOUNT, templateParams);
+}
+
+// Email de notification
+async function sendNotificationEmail(toEmail, subject, message, type) {
+  var userName = toEmail.split('@')[0];
+  type = type || "info";
+  
+  var typeConfig = {
+    info: { bgColor: "#3b82f6", typeIcon: "ℹ️" },
+    warning: { bgColor: "#f59e0b", typeIcon: "⚠️" },
+    error: { bgColor: "#ef4444", typeIcon: "🚨" }
+  };
+  
+  var cfg = typeConfig[type] || typeConfig.info;
+  
+  var templateParams = {
+    to_email: toEmail,
+    userName: userName,
+    bgColor: cfg.bgColor,
+    typeIcon: cfg.typeIcon,
+    subject: subject,
+    message: message.replace(/\n/g, '<br>')
+  };
+  
+  console.log(`📧 Envoi à ${toEmail} avec le nom: ${userName}`);
+  return emailjs.send(EJS_SVC, EJS_TPL_NOTIF, templateParams);
+}
+
+/* ═══════════════════════════════════════════════════════
+   ÉTAT GLOBAL
+═══════════════════════════════════════════════════════ */
+var ME = sessionStorage.getItem("user") || "";
+var allUsers = [];
+var editDocId = null, editEmail = null;
+var curPage = 1, PER = 8;
+var notifType = "all";
+var notifHist = [];
+var activityLogCache = [];
+var darkMode = localStorage.getItem("darkMode") === "1";
+
+document.getElementById("hEmail").textContent = ME;
+document.getElementById("sbEmail").textContent = ME;
+document.getElementById("sbAva").textContent = ME.charAt(0).toUpperCase();
+if (darkMode) document.documentElement.setAttribute("data-theme", "dark");
+updateDarkBtn();
+
+/* ═══════════════════════════════════════════════════════
+   DARK MODE
+═══════════════════════════════════════════════════════ */
+function toggleDark() {
+  darkMode = !darkMode;
+  localStorage.setItem("darkMode", darkMode ? "1" : "0");
+  document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
+  updateDarkBtn();
+}
+function updateDarkBtn() {
+  document.getElementById("darkBtn").textContent = darkMode ? "☀️" : "🌙";
+}
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE SIDEBAR
+═══════════════════════════════════════════════════════ */
+function toggleSidebar() {
+  var sb = document.getElementById("mainSidebar");
+  var ov = document.getElementById("sbOverlay");
+  sb.classList.toggle("open");
+  ov.classList.toggle("open");
+}
+
+/* ═══════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════ */
+function toast(msg, type) {
+  var w = document.getElementById("toastWrap");
+  var el = document.createElement("div");
+  el.className = "toast " + (type || "info");
+  var icons = { success: "✅", error: "❌", info: "ℹ️", warning: "⚠️" };
+  el.innerHTML = '<span>' + (icons[type] || "ℹ️") + '</span><span>' + msg + '</span>';
+  w.appendChild(el);
+  setTimeout(function() {
+    el.style.opacity = "0";
+    el.style.transition = "opacity .3s";
+    setTimeout(function() { el.remove(); }, 300);
+  }, 3500);
+}
+
+/* ═══════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════ */
+var PAGES = ["overview", "list", "add", "notif", "activity", "settings"];
+function sp(name) {
+  PAGES.forEach(function(p) {
+    var pageEl = document.getElementById("page-" + p);
+    var navEl = document.getElementById("nav-" + p);
+    if (pageEl) pageEl.classList.remove("active");
+    if (navEl) navEl.classList.remove("active");
+  });
+  document.getElementById("page-" + name).classList.add("active");
+  document.getElementById("nav-" + name).classList.add("active");
+  document.getElementById("mainSidebar").classList.remove("open");
+  document.getElementById("sbOverlay").classList.remove("open");
+  if (name === "activity") loadActivityLog();
+}
+function openM(id) { document.getElementById(id).classList.add("open"); }
+function closeM(id) { document.getElementById(id).classList.remove("open"); editDocId = null; editEmail = null; }
+
+/* ═══════════════════════════════════════════════════════
+   CHARGEMENT DES UTILISATEURS
+═══════════════════════════════════════════════════════ */
+function loadUsers() {
+  db.collection("users").get().then(function(snap) {
+    allUsers = [];
+    snap.forEach(function(d) { allUsers.push(Object.assign({ id: d.id }, d.data())); });
+    updateStats();
+    filterAndRender();
+    renderPreview();
+    updateNotifCounts();
+    populateOneEmailSel();
+  }).catch(function() { toast("Erreur chargement utilisateurs.", "error"); });
+}
+
+function updateStats() {
+  var adm = allUsers.filter(function(u) { return u.role === "admin"; }).length;
+  document.getElementById("stTotal").textContent = allUsers.length;
+  document.getElementById("stAdmins").textContent = adm;
+  document.getElementById("stUsers").textContent = allUsers.length - adm;
+  document.getElementById("totalCount").textContent = allUsers.length;
+  document.getElementById("sbCount").textContent = allUsers.length;
+}
+
+function renderPreview() {
+  var tbody = document.getElementById("prevList");
+  var list = allUsers.slice(0, 6);
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="4" class="tbl-empty">Aucun utilisateur.</td></tr>'; return; }
+  tbody.innerHTML = list.map(function(u, i) { return rowHTML(u, i + 1, true); }).join("");
+}
+
+/* ═══════════════════════════════════════════════════════
+   TABLEAU DES COMPTES
+═══════════════════════════════════════════════════════ */
+function filterAndRender() {
+  var q = (document.getElementById("searchBar").value || "").toLowerCase();
+  var role = document.getElementById("roleFilter").value;
+  var list = allUsers.filter(function(u) {
+    return (!q || u.email.toLowerCase().includes(q)) && (!role || u.role === role);
+  });
+  curPage = 1;
+  renderTable(list);
+}
+
+function renderTable(list) {
+  var tbody = document.getElementById("userTbody");
+  var totPgs = Math.ceil(list.length / PER) || 1;
+  if (curPage > totPgs) curPage = totPgs;
+  var st = (curPage - 1) * PER, sl = list.slice(st, st + PER);
+  var from = list.length ? st + 1 : 0, to = Math.min(st + PER, list.length);
+  document.getElementById("pgInfo").textContent = list.length ? from + " – " + to + " sur " + list.length + " compte(s)" : "Aucun résultat";
+  tbody.innerHTML = sl.length ? sl.map(function(u, i) { return rowHTML(u, st + i + 1, false); }).join("") : '<tr><td colspan="5" class="tbl-empty">🔍 Aucun compte trouvé.</td></tr>';
+  var btns = '<button class="pg-btn" onclick="goPage(' + curPage + ',-1)" ' + (curPage === 1 ? "disabled" : "") + '>← Préc</button>';
+  pRange(curPage, totPgs).forEach(function(p) {
+    if (p === "…") btns += '<span style="padding:0 4px;color:var(--subtle)">…</span>';
+    else btns += '<button class="pg-btn' + (p === curPage ? " active" : "") + '" onclick="jumpPage(' + p + ')">' + p + '</button>';
+  });
+  btns += '<button class="pg-btn" onclick="goPage(' + curPage + ',1)" ' + (curPage >= totPgs ? "disabled" : "") + '>Suiv →</button>';
+  document.getElementById("pgBtns").innerHTML = btns;
+  renderTable._list = list;
+}
+
+function pRange(c, t) {
+  if (t <= 7) { var r = []; for (var i = 1; i <= t; i++) r.push(i); return r; }
+  var pages = [1];
+  if (c > 3) pages.push("…");
+  for (var p = Math.max(2, c - 1); p <= Math.min(t - 1, c + 1); p++) pages.push(p);
+  if (c < t - 2) pages.push("…");
+  pages.push(t);
+  return pages;
+}
+function goPage(c, d) { curPage = c + d; if (renderTable._list) renderTable(renderTable._list); }
+function jumpPage(p) { curPage = p; if (renderTable._list) renderTable(renderTable._list); }
+
+function rowHTML(u, idx, preview) {
+  var init = u.email ? u.email.charAt(0).toUpperCase() : "?";
+  var lastLogin = u.lastLogin ? new Date(u.lastLogin).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "Jamais";
+  if (preview) {
+    return '<tr>' +
+      '<td style="color:var(--subtle);font-size:12px;width:34px">' + idx + '</td>' +
+      '<td><div style="display:flex;align-items:center"><div class="u-ava">' + init + '</div><span style="font-weight:600">' + escapeHTML(u.email) + '</span></div></td>' +
+      '<td><span class="role-badge role-' + u.role + '">' + (u.role === "admin" ? "🛡️ Admin" : "👤 User") + '</span></td>' +
+      '<td><div class="act-btns"><button class="btn btn-secondary btn-sm" style="color:var(--warning)" onclick="openRoleModal(\'' + u.id + '\',\'' + u.email + '\',\'' + u.role + '\')">✏️ Rôle</button></div></td>' +
+      '</tr>';
+  }
+  return '<tr>' +
+    '<td style="color:var(--subtle);font-size:12px;width:34px">' + idx + '</td>' +
+    '<td><div style="display:flex;align-items:center"><div class="u-ava">' + init + '</div><span style="font-weight:600">' + escapeHTML(u.email) + '</span></div></td>' +
+    '<td><span class="role-badge role-' + u.role + '">' + (u.role === "admin" ? "🛡️ Admin" : "👤 User") + '</span></td>' +
+    '<td><span style="font-size:12px;color:var(--subtle)">' + lastLogin + '</span></td>' +
+    '<td><div class="act-btns">' +
+    '<button class="btn btn-secondary btn-sm" onclick="openRoleModal(\'' + u.id + '\',\'' + u.email + '\',\'' + u.role + '\')">✏️ Rôle</button>' +
+    '<button class="btn btn-secondary btn-sm" style="color:var(--info)" onclick="openPassModal(\'' + u.id + '\',\'' + u.email + '\')">🔑 Mdp</button>' +
+    '<button class="btn btn-danger btn-sm" onclick="deleteUser(\'' + u.id + '\',\'' + u.email + '\')">🗑️</button>' +
+    '</div></td>' +
+    '</tr>';
+}
+
+function escapeHTML(str) {
+  if (!str) return "";
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/* ═══════════════════════════════════════════════════════
+   ACTIONS SUR LES COMPTES
+═══════════════════════════════════════════════════════ */
+function openRoleModal(id, email, role) {
+  editDocId = id;
+  editEmail = email;
+  document.getElementById("mRoleEmail").textContent = email;
+  document.getElementById("mRoleSel").value = role;
+  openM("mRole");
+}
+
+function saveRole() {
+  if (!editDocId) return;
+  var newRole = document.getElementById("mRoleSel").value;
+  var user = allUsers.find(function(u) { return u.id === editDocId; });
+  var oldRole = user ? user.role : null;
+  
+  db.collection("users").doc(editDocId).update({ role: newRole }).then(function() {
+    toast("Rôle mis à jour !", "success");
+    logActivity("edit", "Rôle de " + editEmail + " → " + newRole, ME);
+    
+    if (oldRole && oldRole !== newRole) {
+      sendRoleChangeEmail(editEmail, oldRole, newRole).catch(function(e) {
+        console.error("Erreur envoi email rôle:", e);
+      });
+    }
+    
+    closeM("mRole");
+    loadUsers();
+  }).catch(function() { toast("Erreur mise à jour.", "error"); });
+}
+
+function openPassModal(id, email) {
+  editDocId = id;
+  editEmail = email;
+  document.getElementById("mPassEmail").textContent = email;
+  document.getElementById("mPassVal").value = "";
+  openM("mPass");
+}
+
+function savePass() {
+  if (!editDocId) return;
+  var newPass = document.getElementById("mPassVal").value.trim();
+  if (!newPass) { toast("Entrez un mot de passe.", "error"); return; }
+  
+  db.collection("users").doc(editDocId).update({ password: newPass }).then(function() {
+    toast("Mot de passe mis à jour !", "success");
+    logActivity("pass", "Mot de passe modifié pour " + editEmail, ME);
+    
+    sendPasswordChangeEmail(editEmail, newPass).catch(function(e) {
+      console.error("Erreur envoi email mot de passe:", e);
+    });
+    
+    closeM("mPass");
+  }).catch(function() { toast("Erreur.", "error"); });
+}
+
+function deleteUser(id, email) {
+  if (!confirm("Supprimer le compte " + email + " ?")) return;
+  db.collection("users").doc(id).delete().then(function() {
+    toast("Compte supprimé.", "success");
+    logActivity("del", "Compte supprimé : " + email, ME);
+    loadUsers();
+  }).catch(function() { toast("Erreur suppression.", "error"); });
+}
+
+/* ═══════════════════════════════════════════════════════
+   AJOUTER UN COMPTE
+═══════════════════════════════════════════════════════ */
+function generatePassword() {
+  var p = "";
+  for (var i = 0; i < 8; i++) p += Math.floor(Math.random() * 10);
+  document.getElementById("nPass").value = p;
+}
+
+function togglePassAdd() {
+  var i = document.getElementById("nPass");
+  i.type = i.type === "text" ? "password" : "text";
+}
+
+function clearAddForm() {
+  document.getElementById("nEmail").value = "";
+  document.getElementById("nPass").value = "";
+  document.getElementById("nRole").value = "user";
+  document.getElementById("emailError").style.display = "none";
+}
+
+function checkEmailExists(email) {
+  return allUsers.some(function(u) { return u.email === email; });
+}
+
+function addUser() {
+  var email = document.getElementById("nEmail").value.trim();
+  var pass = document.getElementById("nPass").value.trim();
+  var role = document.getElementById("nRole").value;
+  
+  if (!email || !pass) {
+    toast("Email et mot de passe requis.", "error");
+    return;
+  }
+  
+  if (checkEmailExists(email)) {
+    document.getElementById("emailError").style.display = "block";
+    toast("Cet email est déjà utilisé.", "error");
+    return;
+  }
+  document.getElementById("emailError").style.display = "none";
+  
+  var btn = document.getElementById("addBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ Création du compte...";
+  
+  db.collection("users").add({
+    email: email,
+    password: pass,
+    role: role,
+    lastLogin: null,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function() {
+    return sendCreationEmail(email, pass, role);
+  }).then(function() {
+    toast("Compte créé et email envoyé !", "success");
+    logActivity("add", "Compte créé : " + email + " (" + role + ")", ME);
+    clearAddForm();
+    loadUsers();
+  }).catch(function(error) {
+    console.error("Erreur:", error);
+    toast("Erreur lors de la création.", "error");
+  }).finally(function() {
+    btn.disabled = false;
+    btn.textContent = "✅ Créer et envoyer l'email";
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   NOTIFICATIONS EMAIL
+═══════════════════════════════════════════════════════ */
+function selectNType(t) {
+  notifType = t;
+  ["all", "admins", "users", "one"].forEach(function(x) {
+    var el = document.getElementById("nt-" + x);
+    if (el) el.classList.remove("selected");
+  });
+  document.getElementById("nt-" + t).classList.add("selected");
+  document.getElementById("oneEmailWrap").style.display = t === "one" ? "block" : "none";
+}
+
+function updateNotifCounts() {
+  var adm = allUsers.filter(function(u) { return u.role === "admin"; }).length;
+  var usr = allUsers.filter(function(u) { return u.role === "user"; }).length;
+  document.getElementById("nc-all").textContent = allUsers.length + " dest.";
+  document.getElementById("nc-admins").textContent = adm + " dest.";
+  document.getElementById("nc-users").textContent = usr + " dest.";
+}
+
+function populateOneEmailSel() {
+  var sel = document.getElementById("oneEmailSel");
+  sel.innerHTML = '<option value="">— Choisir un utilisateur —</option>' + allUsers.map(function(u) {
+    return '<option value="' + u.email + '">' + u.email + ' (' + u.role + ')</option>';
+  }).join("");
+}
+
+async function sendNotification() {
+  var subject = document.getElementById("nSubject").value.trim();
+  var message = document.getElementById("nMessage").value.trim();
+  
+  if (!subject || !message) {
+    toast("Objet et message requis.", "error");
+    return;
+  }
+  
+  var recipients = [];
+  if (notifType === "all") {
+    recipients = allUsers;
+  } else if (notifType === "admins") {
+    recipients = allUsers.filter(function(u) { return u.role === "admin"; });
+  } else if (notifType === "users") {
+    recipients = allUsers.filter(function(u) { return u.role === "user"; });
+  } else if (notifType === "one") {
+    var email = document.getElementById("oneEmailSel").value;
+    if (!email) { toast("Choisissez un destinataire.", "error"); return; }
+    recipients = [{ email: email }];
+  }
+  
+  if (!recipients.length) {
+    toast("Aucun destinataire.", "error");
+    return;
+  }
+  
+  var btn = document.getElementById("sendNotifBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ Envoi en cours...";
+  
+  var sent = 0, failed = 0;
+  var errors = [];
+  
+  for (var i = 0; i < recipients.length; i++) {
+    var recipient = recipients[i];
+    try {
+      await sendNotificationEmail(recipient.email, subject, message, "info");
+      sent++;
+      console.log(`✅ Envoyé à ${recipient.email} (${sent}/${recipients.length})`);
+    } catch (e) {
+      failed++;
+      errors.push(`${recipient.email}: ${e.message || e.text || "Erreur inconnue"}`);
+      console.error(`❌ Échec pour ${recipient.email}:`, e);
+    }
+    
+    if (i < recipients.length - 1) {
+      await new Promise(r => setTimeout(r, 500));
+    }
+  }
+  
+  if (failed === 0) {
+    toast(`✅ ${sent} notification(s) envoyée(s) avec succès !`, "success");
+  } else {
+    toast(`⚠️ ${sent} envoyée(s), ${failed} échec(s). Vérifiez la console.`, "warning");
+    if (errors.length > 0) {
+      console.error("Détails des erreurs:", errors);
+    }
+  }
+  
+  logActivity("notif", `Notification "${subject}" envoyée à ${recipients.length} destinataire(s) (${sent} succès, ${failed} échecs)`, ME);
+  addNotifHistory(subject, recipients.length, sent, failed);
+  
+  document.getElementById("nSubject").value = "";
+  document.getElementById("nMessage").value = "";
+  
+  btn.disabled = false;
+  btn.textContent = "📤 Envoyer la notification";
+}
+
+function addNotifHistory(subj, total, sent, failed) {
+  var item = { subj: subj, total: total, sent: sent, failed: failed, time: new Date().toLocaleString("fr-FR") };
+  notifHist.unshift(item);
+  renderNotifHistory();
+}
+
+function renderNotifHistory() {
+  var cont = document.getElementById("notifHistory");
+  if (!notifHist.length) { cont.innerHTML = '<div class="log-empty">Aucune notification envoyée.</div>'; return; }
+  cont.innerHTML = notifHist.slice(0, 10).map(function(i) {
+    var ok = i.failed === 0;
+    return '<div class="nh-item"><div class="nh-dot ' + (ok ? "ok" : "fail") + '"></div>' +
+      '<div class="nh-body"><div class="nh-to">' + escapeHTML(i.subj) + '</div>' +
+      '<div class="nh-subj">' + i.total + ' destinataire(s) · ' + i.sent + ' envoyé(s)' + (i.failed ? ' · ' + i.failed + ' échec(s)' : '') + '</div>' +
+      '<div class="nh-time">' + i.time + '</div></div></div>';
+  }).join("");
+}
+
+function clearNotifHistory() { notifHist = []; renderNotifHistory(); toast("Historique effacé.", "info"); }
+
+/* ═══════════════════════════════════════════════════════
+   ACTIVITY LOG
+═══════════════════════════════════════════════════════ */
+function logActivity(type, msg, who) {
+  var item = { type: type, msg: msg, who: who, time: new Date().toLocaleString("fr-FR") };
+  db.collection("activity_log").add({ ...item, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).catch(function() {});
+}
+
+function loadActivityLog() {
+  var cont = document.getElementById("activityLog");
+  cont.innerHTML = '<div class="log-empty">Chargement…</div>';
+  db.collection("activity_log").orderBy("timestamp", "desc").limit(50).get().then(function(snap) {
+    activityLogCache = [];
+    if (snap.empty) { cont.innerHTML = '<div class="log-empty">Aucune action enregistrée.</div>'; return; }
+    snap.forEach(function(d) { activityLogCache.push(d.data()); });
+    renderActivityLog();
+  }).catch(function() { cont.innerHTML = '<div class="log-empty">Erreur chargement.</div>'; });
+}
+
+function renderActivityLog() {
+  var cont = document.getElementById("activityLog");
+  var dotClass = { add: "add", del: "del", edit: "edit", pass: "pass", notif: "notif" };
+  cont.innerHTML = activityLogCache.map(function(a) {
+    return '<div class="log-item">' +
+      '<div class="log-dot-wrap"><div class="log-dot ' + (dotClass[a.type] || "edit") + '"></div></div>' +
+      '<div><div class="log-msg">' + escapeHTML(a.msg || "") + '</div>' +
+      '<div class="log-who">Par ' + escapeHTML(a.who || "") + '</div>' +
+      '<div class="log-time">' + escapeHTML(a.time || "") + '</div></div></div>';
+  }).join("");
+}
+
+function clearActivityLog() {
+  if (!confirm("Effacer tout le journal d'activité ?")) return;
+  db.collection("activity_log").get().then(function(snap) {
+    var batch = db.batch();
+    snap.forEach(function(d) { batch.delete(d.ref); });
+    return batch.commit();
+  }).then(function() {
+    activityLogCache = [];
+    document.getElementById("activityLog").innerHTML = '<div class="log-empty">Journal effacé.</div>';
+    toast("Journal effacé.", "success");
+  }).catch(function() { toast("Erreur.", "error"); });
+}
+
+/* ═══════════════════════════════════════════════════════
+   PARAMÈTRES
+═══════════════════════════════════════════════════════ */
+function loadSettings() {
+  db.collection("settings").doc("system").get().then(function(d) {
+    if (!d.exists) return;
+    var s = d.data();
+    if (s.tempMax) document.getElementById("s-tMax").value = s.tempMax;
+  });
+}
+
+function saveSettings() {
+  var cfg = {
+    tempMax: parseFloat(document.getElementById("s-tMax").value) || null
+  };
+  db.collection("settings").doc("system").set(cfg).then(function() {
+    toast("Paramètres enregistrés !", "success");
+    logActivity("edit", "Paramètres système mis à jour (Température max: " + cfg.tempMax + "°C)", ME);
+  }).catch(function() { toast("Erreur sauvegarde.", "error"); });
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXPORT CSV
+═══════════════════════════════════════════════════════ */
+function downloadCSV(csv, filename) {
+  var blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportUsersCSV() {
+  var rows = ["#,Email,Rôle,Dernière connexion"];
+  allUsers.forEach(function(u, i) {
+    var ll = u.lastLogin ? new Date(u.lastLogin).toLocaleDateString("fr-FR") : "Jamais";
+    rows.push((i + 1) + "," + u.email + "," + u.role + "," + ll);
+  });
+  downloadCSV(rows.join("\n"), "comptes_" + new Date().toLocaleDateString("fr-FR").replace(/\//g, "-") + ".csv");
+  toast("Export CSV prêt.", "success");
+}
+
+function exportActivityCSV() {
+  if (!activityLogCache.length) { toast("Aucune action à exporter.", "error"); return; }
+  var rows = ["Message,Par,Heure,Type"];
+  activityLogCache.forEach(function(a) {
+    rows.push('"' + a.msg + '","' + a.who + '","' + a.time + '",' + a.type);
+  });
+  downloadCSV(rows.join("\n"), "journal_" + new Date().toLocaleDateString("fr-FR").replace(/\//g, "-") + ".csv");
+  toast("Export CSV prêt.", "success");
+}
+
+/* ═══════════════════════════════════════════════════════
+   LOGOUT
+═══════════════════════════════════════════════════════ */
+function logout() {
+  var myKey = ME.replace(/[.#$[\]]/g, "_");
+  rtdb.ref("online/" + myKey).remove();
+  sessionStorage.clear();
+  window.location.href = "login.html";
+}
+
+/* ═══════════════════════════════════════════════════════
+   INITIALISATION
+═══════════════════════════════════════════════════════ */
+loadUsers();
+loadSettings();
+
+document.querySelectorAll(".overlay").forEach(function(overlay) {
+  overlay.addEventListener("click", function(e) {
+    if (e.target === overlay) overlay.classList.remove("open");
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Classroom - Historique & Analyse</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════════════
+   VARIABLES THEME - Version apaisante
+════════════════════════════════════════════════════════ */
+:root {
+  --primary: #1e6f5c;
+  --primary-dark: #165a4a;
+  --primary-light: #e6f4f0;
+  --secondary: #3b82f6;
+  --accent: #8b5cf6;
+  --bg-primary: #f0f4f8;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f8fafc;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --card-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+  --card-shadow-hover: 0 12px 28px rgba(0,0,0,0.06), 0 4px 8px rgba(0,0,0,0.04);
+  --hover-bg: #f1f5f9;
+  --gradient-start: #1e6f5c;
+  --gradient-end: #3b82f6;
+  --radius: 20px;
+  --radius-sm: 12px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] {
+  --primary: #3b8b76;
+  --primary-dark: #2c7a66;
+  --primary-light: #1a3a35;
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #162036;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  --card-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  --card-shadow-hover: 0 12px 28px rgba(0,0,0,0.35);
+  --hover-bg: #334155;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px }
+::-webkit-scrollbar-track { background: transparent }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 100px }
+
+/* HEADER */
+header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.logo-icon {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.theme-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 40px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: var(--transition);
+}
+
+.theme-toggle:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.nav-btn {
+  padding: 8px 18px;
+  border-radius: 40px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+/* MODES D'AFFICHAGE */
+.modes-bar {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 32px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 70px;
+  z-index: 90;
+}
+
+.mode-btn {
+  padding: 10px 22px;
+  border-radius: 40px;
+  border: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mode-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(30,111,92,0.3);
+}
+
+/* CONTAINER */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 28px 32px;
+}
+
+/* STATS CARDS */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+  transform: scaleX(0);
+  transition: transform 0.3s;
+}
+
+.stat-card:hover::before {
+  transform: scaleX(1);
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--card-shadow-hover);
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 600;
+}
+
+/* FILTRES */
+.filters-bar {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 28px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-tertiary);
+  padding: 6px 16px;
+  border-radius: 60px;
+  border: 1px solid var(--border);
+}
+
+.filter-group label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.filter-input, .filter-select {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: 40px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  transition: var(--transition);
+}
+
+.filter-input:focus, .filter-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(30,111,92,0.1);
+}
+
+.radio-group {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  background: var(--bg-tertiary);
+  padding: 6px 16px;
+  border-radius: 60px;
+  border: 1px solid var(--border);
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.radio-group input {
+  cursor: pointer;
+  accent-color: var(--primary);
+  width: 14px;
+  height: 14px;
+}
+
+/* NAVIGATION GRAPHIQUE */
+.chart-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.chart-nav-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 16px;
+  transition: var(--transition);
+  color: var(--text-secondary);
+}
+
+.chart-nav-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: transparent;
+  transform: translateY(-2px);
+}
+
+.chart-nav-info {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* CONTAINERS GRAPHIQUES */
+.chart-container {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.chart-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+}
+
+canvas {
+  max-height: 320px;
+  width: 100%;
+}
+
+.empty-chart {
+  text-align: center;
+  padding: 60px;
+  color: var(--text-muted);
+  font-size: 14px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+/* VUE CARTES */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
+}
+
+.data-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  transition: var(--transition);
+}
+
+.data-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--card-shadow-hover);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-date {
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 13px;
+}
+
+.card-time {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.card-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.metric {
+  text-align: center;
+  padding: 10px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+.metric-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.metric-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.decision-badge {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 40px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.decision-normal { background: rgba(16,185,129,0.15); color: #10b981; }
+.decision-chaud { background: rgba(239,68,68,0.15); color: #ef4444; }
+.decision-froid { background: rgba(59,130,246,0.15); color: #3b82f6; }
+.decision-humide { background: rgba(6,182,212,0.15); color: #06b6d4; }
+
+/* VUE TABLEAU */
+.table-wrapper {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th {
+  text-align: left;
+  padding: 16px;
+  background: var(--bg-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+tr:hover {
+  background: var(--hover-bg);
+}
+
+/* VUE TIMELINE */
+.timeline {
+  position: relative;
+  padding-left: 40px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--gradient-start), var(--gradient-end));
+  border-radius: 2px;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 24px;
+  padding: 18px 24px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-left: 20px;
+  transition: var(--transition);
+}
+
+.timeline-item:hover {
+  transform: translateX(4px);
+  box-shadow: var(--card-shadow);
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -30px;
+  top: 22px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--bg-secondary);
+  box-shadow: 0 0 0 3px rgba(30,111,92,0.2);
+}
+
+.timeline-time {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.timeline-content {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+/* VUE COMPARAISON */
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 24px;
+}
+
+.compare-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.compare-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--card-shadow-hover);
+}
+
+.compare-title {
+  font-size: 16px;
+  font-weight: 700;
+  padding: 18px 20px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.compare-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.compare-section:last-child {
+  border-bottom: none;
+}
+
+.compare-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compare-stats-row {
+  display: flex;
+  justify-content: space-around;
+  gap: 16px;
+}
+
+.compare-stat {
+  text-align: center;
+  flex: 1;
+  padding: 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+.compare-stat-value {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.compare-stat-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.compare-stat-value.temp { color: #ef4444; }
+.compare-stat-value.hum { color: #06b6d4; }
+.compare-stat-value.pers { color: #f59e0b; }
+
+/* HISTOGRAMMES & DONUTS */
+.histogram-container {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.donut-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.donut-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+}
+
+.donut-card canvas {
+  max-height: 220px;
+  margin: 16px auto;
+}
+
+/* Admin Link */
+.admin-link {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  color: white;
+  padding: 12px 20px;
+  border-radius: 60px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--card-shadow);
+  transition: var(--transition);
+  z-index: 200;
+}
+
+.admin-link:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  header, .modes-bar, .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .compare-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .filter-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .radio-group {
+    justify-content: center;
+  }
+  
+  .mode-btn {
+    padding: 8px 14px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-value {
+    font-size: 26px;
+  }
+  
+  .card-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌿</div>
+    <div class="logo-text">Smart Classroom</div>
+  </div>
+  <div class="header-actions">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+    <a href="dashboard.html" class="nav-btn">📊 Dashboard</a>
+    <a href="accueil.html" class="nav-btn">🏠 Accueil</a>
+  </div>
+</header>
+
+<div class="modes-bar">
+  <button class="mode-btn active" data-mode="graph" onclick="switchMode('graph')">📈 Graphiques</button>
+  <button class="mode-btn" data-mode="histogram" onclick="switchMode('histogram')">📊 Histogrammes</button>
+  <button class="mode-btn" data-mode="donut" onclick="switchMode('donut')">🍩 Répartition</button>
+  <button class="mode-btn" data-mode="cards" onclick="switchMode('cards')">🃏 Cartes</button>
+  <button class="mode-btn" data-mode="table" onclick="switchMode('table')">📋 Tableau</button>
+  <button class="mode-btn" data-mode="timeline" onclick="switchMode('timeline')">⏱️ Chronologie</button>
+  <button class="mode-btn" data-mode="compare" onclick="switchMode('compare')">📊 Comparaison</button>
+</div>
+
+<div class="container">
+  <!-- Stats globales -->
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <!-- Filtres -->
+  <div class="filters-bar" id="filtersBar">
+    <div class="filter-group">
+      <label>🔍</label>
+      <input type="text" id="searchInput" class="filter-input" placeholder="Rechercher..." oninput="filterData()">
+    </div>
+    
+    <div class="radio-group" id="dateRangeType">
+      <label><input type="radio" name="dateType" value="period" checked onchange="toggleDateInputs()"> 📅 Période</label>
+      <label><input type="radio" name="dateType" value="single" onchange="toggleDateInputs()"> 📆 Jour unique</label>
+    </div>
+    
+    <div id="periodInputs" class="filter-group" style="display: flex;">
+      <label>De</label>
+      <input type="date" id="dateFrom" class="filter-input" onchange="filterData()">
+      <label>À</label>
+      <input type="date" id="dateTo" class="filter-input" onchange="filterData()">
+    </div>
+    
+    <div id="singleDateInput" class="filter-group" style="display: none;">
+      <label>📅</label>
+      <input type="date" id="singleDate" class="filter-input" onchange="filterData()">
+    </div>
+    
+    <div class="filter-group">
+      <label>🎯</label>
+      <select id="decisionFilter" class="filter-select" onchange="filterData()">
+        <option value="">Toutes</option>
+        <option value="normal">Normal</option>
+        <option value="chaud">Chaud 🔥</option>
+        <option value="froid">Froid ❄️</option>
+        <option value="humide">Humide 💧</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Vue Graphique -->
+  <div id="graphView" class="mode-view">
+    <div class="chart-container">
+      <div class="chart-title">🌡️ Évolution de la température</div>
+      <canvas id="tempChart"></canvas>
+      <div class="chart-nav">
+        <button class="chart-nav-btn" onclick="navigateChart('temp', -1)">◀</button>
+        <span class="chart-nav-info" id="tempNavInfo">Chargement...</span>
+        <button class="chart-nav-btn" onclick="navigateChart('temp', 1)">▶</button>
+      </div>
+    </div>
+    <div class="chart-container">
+      <div class="chart-title">💧 Évolution de l'humidité</div>
+      <canvas id="humChart"></canvas>
+      <div class="chart-nav">
+        <button class="chart-nav-btn" onclick="navigateChart('hum', -1)">◀</button>
+        <span class="chart-nav-info" id="humNavInfo">Chargement...</span>
+        <button class="chart-nav-btn" onclick="navigateChart('hum', 1)">▶</button>
+      </div>
+    </div>
+    <div class="chart-container">
+      <div class="chart-title">👥 Nombre de personnes</div>
+      <canvas id="persChart"></canvas>
+      <div class="chart-nav">
+        <button class="chart-nav-btn" onclick="navigateChart('pers', -1)">◀</button>
+        <span class="chart-nav-info" id="persNavInfo">Chargement...</span>
+        <button class="chart-nav-btn" onclick="navigateChart('pers', 1)">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vue Histogrammes -->
+  <div id="histogramView" class="mode-view" style="display:none">
+    <div class="histogram-container">
+      <div class="chart-title">📊 Distribution des températures</div>
+      <canvas id="tempHistChart"></canvas>
+    </div>
+    <div class="histogram-container">
+      <div class="chart-title">📊 Distribution de l'humidité</div>
+      <canvas id="humHistChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Vue Cercles -->
+  <div id="donutView" class="mode-view" style="display:none">
+    <div class="donut-container">
+      <div class="donut-card">
+        <div class="chart-title">🍩 Répartition des décisions</div>
+        <canvas id="decisionDonutChart"></canvas>
+      </div>
+      <div class="donut-card">
+        <div class="chart-title">🍩 Plages de température</div>
+        <canvas id="tempRangeDonutChart"></canvas>
+      </div>
+      <div class="donut-card">
+        <div class="chart-title">🍩 Plages d'humidité</div>
+        <canvas id="humRangeDonutChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vue Cartes -->
+  <div id="cardsView" class="mode-view" style="display:none">
+    <div class="cards-grid" id="cardsGrid"></div>
+  </div>
+
+  <!-- Vue Tableau -->
+  <div id="tableView" class="mode-view" style="display:none">
+    <div class="table-wrapper">
+      <table id="dataTable">
+        <thead id="tableHeader"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Vue Timeline -->
+  <div id="timelineView" class="mode-view" style="display:none">
+    <div class="timeline" id="timelineContent"></div>
+  </div>
+
+  <!-- Vue Comparaison -->
+  <div id="compareView" class="mode-view" style="display:none">
+    <div class="compare-grid" id="compareGrid"></div>
+  </div>
+</div>
+
+<a href="admin.html" class="admin-link">⚙️ Administration</a>
+
+<script>
+// Firebase config
+var firebaseConfig = {
+  apiKey: "AIzaSyCnTQ4wiPX6_N6EZ9ew53jl3VXIVmetrYQ",
+  authDomain: "smartclassroomai-f4ffe.firebaseapp.com",
+  databaseURL: "https://smartclassroomai-f4ffe-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "smartclassroomai-f4ffe",
+  storageBucket: "smartclassroomai-f4ffe.firebasestorage.app",
+  messagingSenderId: "775061606543",
+  appId: "1:775061606543:web:0f0b5c9dd8ebcf61aae0fa"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Variables globales
+let allData = [];
+let filteredData = [];
+let currentMode = 'graph';
+let charts = {};
+
+// Navigation
+let chartRanges = {
+  temp: { start: 0, end: null, step: 50 },
+  hum: { start: 0, end: null, step: 50 },
+  pers: { start: 0, end: null, step: 50 }
+};
+
+// THEME
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  const btn = document.getElementById('themeToggle');
+  btn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+  refreshAllCharts();
+}
+
+const savedTheme = localStorage.getItem('theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.getElementById('themeToggle').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+
+// TOGGLE PÉRIODE / JOUR UNIQUE
+function toggleDateInputs() {
+  const dateType = document.querySelector('input[name="dateType"]:checked').value;
+  const periodDiv = document.getElementById('periodInputs');
+  const singleDiv = document.getElementById('singleDateInput');
+  
+  if (dateType === 'period') {
+    periodDiv.style.display = 'flex';
+    singleDiv.style.display = 'none';
+    document.getElementById('singleDate').value = '';
+  } else {
+    periodDiv.style.display = 'none';
+    singleDiv.style.display = 'flex';
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+  }
+  filterData();
+}
+
+// UTILITAIRES
+function getDecision(r) {
+  return r.ventilation || r.decision || r.Decision || null;
+}
+
+function getDecisionClass(decision) {
+  if (!decision) return '';
+  const d = decision.toLowerCase();
+  if (d.includes('normal')) return 'decision-normal';
+  if (d.includes('chaud')) return 'decision-chaud';
+  if (d.includes('froid')) return 'decision-froid';
+  if (d.includes('humide')) return 'decision-humide';
+  return '';
+}
+
+function dateKey(ts) {
+  if (!ts) return 'inconnu';
+  let d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toISOString().slice(0, 10);
+}
+
+function formatTime(ts) {
+  if (!ts) return '';
+  let d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function escapeHTML(str) {
+  if (!str) return "";
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+// FILTRAGE
+function filterData() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const decisionFilter = document.getElementById('decisionFilter').value;
+  const dateType = document.querySelector('input[name="dateType"]:checked').value;
+  
+  filteredData = allData.filter(r => {
+    if (search && !`${r.heure} ${r.temperature} ${getDecision(r)}`.toLowerCase().includes(search)) return false;
+    if (decisionFilter) {
+      const dec = (getDecision(r) || '').toLowerCase();
+      if (!dec.includes(decisionFilter.toLowerCase())) return false;
+    }
+    
+    const recordDate = dateKey(r.timestamp);
+    if (dateType === 'period') {
+      const dateFrom = document.getElementById('dateFrom').value;
+      const dateTo = document.getElementById('dateTo').value;
+      if (dateFrom && recordDate < dateFrom) return false;
+      if (dateTo && recordDate > dateTo) return false;
+    } else {
+      const singleDate = document.getElementById('singleDate').value;
+      if (singleDate && recordDate !== singleDate) return false;
+    }
+    return true;
+  });
+  
+  filteredData.sort((a, b) => {
+    let da = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
+    let db = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
+    return da - db;
+  });
+  
+  chartRanges = {
+    temp: { start: 0, end: Math.min(50, filteredData.length), step: 50 },
+    hum: { start: 0, end: Math.min(50, filteredData.length), step: 50 },
+    pers: { start: 0, end: Math.min(50, filteredData.length), step: 50 }
+  };
+  
+  updateStats();
+  refreshAllCharts();
+}
+
+function updateStats() {
+  const temps = filteredData.map(r => parseFloat(r.temperature)).filter(v => !isNaN(v));
+  const hums = filteredData.map(r => parseFloat(r.humidite)).filter(v => !isNaN(v));
+  const pers = filteredData.map(r => parseInt(r.personnes)).filter(v => !isNaN(v));
+  const days = new Set(filteredData.map(r => dateKey(r.timestamp)));
+  
+  const maxPersons = pers.length ? Math.max(...pers) : '—';
+  
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-value">${temps.length ? (temps.reduce((a,b)=>a+b,0)/temps.length).toFixed(1) : '—'}°C</div><div class="stat-label">Température moyenne</div></div>
+    <div class="stat-card"><div class="stat-value">${temps.length ? Math.max(...temps).toFixed(1) : '—'}°C</div><div class="stat-label">Température max</div></div>
+    <div class="stat-card"><div class="stat-value">${temps.length ? Math.min(...temps).toFixed(1) : '—'}°C</div><div class="stat-label">Température min</div></div>
+    <div class="stat-card"><div class="stat-value">${hums.length ? (hums.reduce((a,b)=>a+b,0)/hums.length).toFixed(1) : '—'}%</div><div class="stat-label">Humidité moyenne</div></div>
+    <div class="stat-card"><div class="stat-value">${maxPersons}</div><div class="stat-label">Max personnes</div></div>
+    <div class="stat-card"><div class="stat-value">${filteredData.length}</div><div class="stat-label">Enregistrements</div></div>
+    <div class="stat-card"><div class="stat-value">${days.size}</div><div class="stat-label">Journées</div></div>
+  `;
+}
+
+// NAVIGATION GRAPHIQUE
+function navigateChart(chartType, direction) {
+  const totalPoints = filteredData.length;
+  if (totalPoints === 0) return;
+  
+  const step = chartRanges[chartType].step;
+  let newStart = chartRanges[chartType].start + (direction * step);
+  
+  if (newStart < 0) newStart = 0;
+  if (newStart >= totalPoints) newStart = Math.max(0, totalPoints - step);
+  
+  chartRanges[chartType].start = newStart;
+  chartRanges[chartType].end = Math.min(newStart + step, totalPoints);
+  
+  renderGraphView();
+}
+
+// VUE GRAPHIQUE
+function renderGraphView() {
+  const totalPoints = filteredData.length;
+  
+  ['temp', 'hum', 'pers'].forEach(type => {
+    const start = chartRanges[type].start;
+    const end = chartRanges[type].end || Math.min(50, totalPoints);
+    const infoEl = document.getElementById(`${type}NavInfo`);
+    if (infoEl) {
+      if (totalPoints === 0) {
+        infoEl.textContent = 'Aucune donnée';
+      } else if (start === 0 && end >= totalPoints) {
+        infoEl.textContent = `Affichage complet (${totalPoints} pts)`;
+      } else {
+        infoEl.textContent = `Points ${start + 1} à ${Math.min(end, totalPoints)} sur ${totalPoints}`;
+      }
+    }
+  });
+  
+  if (totalPoints === 0) {
+    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+    if (charts.temp) charts.temp.destroy();
+    if (charts.hum) charts.hum.destroy();
+    if (charts.pers) charts.pers.destroy();
+    
+    charts.temp = new Chart(document.getElementById('tempChart'), {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Température (°C)', data: [], borderColor: '#ef4444' }] },
+      options: { responsive: true, plugins: { legend: { labels: { color: textColor } } } }
+    });
+    charts.hum = new Chart(document.getElementById('humChart'), {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Humidité (%)', data: [], borderColor: '#06b6d4' }] },
+      options: { responsive: true, plugins: { legend: { labels: { color: textColor } } } }
+    });
+    charts.pers = new Chart(document.getElementById('persChart'), {
+      type: 'bar',
+      data: { labels: [], datasets: [{ label: 'Personnes', data: [], backgroundColor: '#f59e0b' }] },
+      options: { responsive: true, plugins: { legend: { labels: { color: textColor } } } }
+    });
+    return;
+  }
+  
+  const getSlice = (type) => {
+    const start = chartRanges[type].start;
+    const end = chartRanges[type].end || Math.min(start + 50, totalPoints);
+    return filteredData.slice(start, end);
+  };
+  
+  const tempSlice = getSlice('temp');
+  const humSlice = getSlice('hum');
+  const persSlice = getSlice('pers');
+  
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+  
+  if (charts.temp) charts.temp.destroy();
+  if (charts.hum) charts.hum.destroy();
+  if (charts.pers) charts.pers.destroy();
+  
+  charts.temp = new Chart(document.getElementById('tempChart'), {
+    type: 'line',
+    data: { 
+      labels: tempSlice.map(r => r.heure || formatTime(r.timestamp)), 
+      datasets: [{ label: 'Température (°C)', data: tempSlice.map(r => parseFloat(r.temperature) || 0), borderColor: '#ef4444', backgroundColor: '#ef444420', borderWidth: 2, fill: true, tension: 0.3, pointRadius: 3 }] 
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: textColor } }, tooltip: { callbacks: { label: (ctx) => `${ctx.parsed.y}°C` } } }, scales: { x: { ticks: { color: textColor, maxRotation: 45, autoSkip: true } }, y: { ticks: { color: textColor } } } }
+  });
+  
+  charts.hum = new Chart(document.getElementById('humChart'), {
+    type: 'line',
+    data: { 
+      labels: humSlice.map(r => r.heure || formatTime(r.timestamp)), 
+      datasets: [{ label: 'Humidité (%)', data: humSlice.map(r => parseFloat(r.humidite) || 0), borderColor: '#06b6d4', backgroundColor: '#06b6d420', borderWidth: 2, fill: true, tension: 0.3, pointRadius: 3 }] 
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: textColor } } }, scales: { x: { ticks: { color: textColor, maxRotation: 45, autoSkip: true } }, y: { ticks: { color: textColor } } } }
+  });
+  
+  charts.pers = new Chart(document.getElementById('persChart'), {
+    type: 'bar',
+    data: { 
+      labels: persSlice.map(r => r.heure || formatTime(r.timestamp)), 
+      datasets: [{ label: 'Nombre de personnes', data: persSlice.map(r => parseInt(r.personnes) || 0), backgroundColor: '#f59e0b', borderRadius: 6 }] 
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: textColor } } }, scales: { x: { ticks: { color: textColor, maxRotation: 45, autoSkip: true } }, y: { ticks: { color: textColor, stepSize: 1, beginAtZero: true } } } }
+  });
+}
+
+// HISTOGRAMMES
+function renderHistogramView() {
+  const temps = filteredData.map(r => parseFloat(r.temperature)).filter(v => !isNaN(v));
+  const hums = filteredData.map(r => parseFloat(r.humidite)).filter(v => !isNaN(v));
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+  
+  const tempHist = createHistogram(temps, 10);
+  const humHist = createHistogram(hums, 10);
+  
+  if (charts.tempHist) charts.tempHist.destroy();
+  if (charts.humHist) charts.humHist.destroy();
+  
+  charts.tempHist = new Chart(document.getElementById('tempHistChart'), {
+    type: 'bar',
+    data: { labels: tempHist.labels, datasets: [{ label: 'Fréquence', data: tempHist.counts, backgroundColor: '#ef4444', borderRadius: 6 }] },
+    options: { responsive: true, plugins: { legend: { labels: { color: textColor } } }, scales: { x: { ticks: { color: textColor } }, y: { ticks: { color: textColor } } } }
+  });
+  
+  charts.humHist = new Chart(document.getElementById('humHistChart'), {
+    type: 'bar',
+    data: { labels: humHist.labels, datasets: [{ label: 'Fréquence', data: humHist.counts, backgroundColor: '#06b6d4', borderRadius: 6 }] },
+    options: { responsive: true, plugins: { legend: { labels: { color: textColor } } }, scales: { x: { ticks: { color: textColor } }, y: { ticks: { color: textColor } } } }
+  });
+}
+
+function createHistogram(vals, bins) {
+  if (!vals.length) return { labels: [], counts: [] };
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const step = (max - min) / bins;
+  const counts = new Array(bins).fill(0);
+  const labels = [];
+  for (let i = 0; i < bins; i++) labels.push((min + i * step).toFixed(1));
+  vals.forEach(v => {
+    let idx = Math.min(Math.floor((v - min) / step), bins - 1);
+    counts[idx]++;
+  });
+  return { labels, counts };
+}
+
+// CERCLES
+function renderDonutView() {
+  const decisions = {};
+  filteredData.forEach(r => { const d = getDecision(r) || 'Inconnu'; decisions[d] = (decisions[d] || 0) + 1; });
+  
+  const tempRanges = { '<18°C': 0, '18-22°C': 0, '22-26°C': 0, '>26°C': 0 };
+  filteredData.forEach(r => { const t = parseFloat(r.temperature); if (isNaN(t)) return; if (t < 18) tempRanges['<18°C']++; else if (t < 22) tempRanges['18-22°C']++; else if (t < 26) tempRanges['22-26°C']++; else tempRanges['>26°C']++; });
+  
+  const humRanges = { '<40%': 0, '40-60%': 0, '60-80%': 0, '>80%': 0 };
+  filteredData.forEach(r => { const h = parseFloat(r.humidite); if (isNaN(h)) return; if (h < 40) humRanges['<40%']++; else if (h < 60) humRanges['40-60%']++; else if (h < 80) humRanges['60-80%']++; else humRanges['>80%']++; });
+  
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+  
+  if (charts.decisionDonut) charts.decisionDonut.destroy();
+  if (charts.tempRangeDonut) charts.tempRangeDonut.destroy();
+  if (charts.humRangeDonut) charts.humRangeDonut.destroy();
+  
+  charts.decisionDonut = new Chart(document.getElementById('decisionDonutChart'), { type: 'doughnut', data: { labels: Object.keys(decisions), datasets: [{ data: Object.values(decisions), backgroundColor: ['#2563eb', '#10b981', '#ef4444', '#06b6d4', '#f59e0b'] }] }, options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } } });
+  charts.tempRangeDonut = new Chart(document.getElementById('tempRangeDonutChart'), { type: 'doughnut', data: { labels: Object.keys(tempRanges), datasets: [{ data: Object.values(tempRanges), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'] }] }, options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } } });
+  charts.humRangeDonut = new Chart(document.getElementById('humRangeDonutChart'), { type: 'doughnut', data: { labels: Object.keys(humRanges), datasets: [{ data: Object.values(humRanges), backgroundColor: ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec489a'] }] }, options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } } });
+}
+
+// VUE CARTES
+function renderCardsView() {
+  const container = document.getElementById('cardsGrid');
+  if (!filteredData.length) { container.innerHTML = '<div class="empty-chart">📭 Aucune donnée à afficher</div>'; return; }
+  container.innerHTML = filteredData.slice().reverse().slice(0, 50).map(r => { const decision = getDecision(r); return `<div class="data-card"><div class="card-header"><span class="card-date">${dateKey(r.timestamp)}</span><span class="card-time">${r.heure || formatTime(r.timestamp)}</span></div><div class="card-metrics"><div class="metric"><div class="metric-value">${r.temperature || '—'}°C</div><div class="metric-label">Température</div></div><div class="metric"><div class="metric-value">${r.humidite || '—'}%</div><div class="metric-label">Humidité</div></div><div class="metric"><div class="metric-value">${r.temp_future ? r.temp_future.toFixed(1) : '—'}°C</div><div class="metric-label">Temp. future</div></div><div class="metric"><div class="metric-value">${r.personnes || '—'}</div><div class="metric-label">Personnes</div></div></div><div style="display:flex; justify-content:space-between; margin-top:12px"><span>${r.pir ? '🟢 PIR ON' : '⚪ PIR OFF'}</span><span>${r.rfid ? '🟢 RFID ON' : '⚪ RFID OFF'}</span><span class="decision-badge ${getDecisionClass(decision)}">${decision || '—'}</span></div></div>`; }).join('');
+}
+
+// VUE TABLEAU
+function renderTableView() {
+  const headers = ['Date', 'Heure', 'Température', 'Temp. future', 'Humidité', 'Personnes', 'PIR', 'RFID', 'Décision'];
+  document.getElementById('tableHeader').innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+  document.getElementById('tableBody').innerHTML = filteredData.slice().reverse().slice(0, 100).map(r => `<tr><td>${dateKey(r.timestamp)}</td><td>${r.heure || formatTime(r.timestamp)}</td><td style="color:#ef4444">${r.temperature || '—'}°C</td><td style="color:#8b5cf6">${r.temp_future ? r.temp_future.toFixed(1) + '°C' : '—'}</td><td style="color:#06b6d4">${r.humidite || '—'}%</td><td style="color:#f59e0b">${r.personnes || '—'}</td><td>${r.pir ? '🟢 ON' : '⚪ OFF'}</td><td>${r.rfid ? '🟢 ON' : '⚪ OFF'}</td><td><span class="decision-badge ${getDecisionClass(getDecision(r))}">${getDecision(r) || '—'}</span></td></tr>`).join('');
+}
+
+// VUE TIMELINE
+function renderTimelineView() {
+  const container = document.getElementById('timelineContent');
+  if (!filteredData.length) { container.innerHTML = '<div class="empty-chart">📭 Aucune donnée à afficher</div>'; return; }
+  container.innerHTML = filteredData.slice().reverse().slice(0, 50).map(r => `<div class="timeline-item"><div class="timeline-time">${dateKey(r.timestamp)} à ${r.heure || formatTime(r.timestamp)}</div><div class="timeline-content"><div>🌡️ <strong>${r.temperature || '—'}°C</strong></div><div>💧 <strong>${r.humidite || '—'}%</strong></div><div>👥 <strong>${r.personnes || '—'}</strong> pers.</div><div>🎯 <span class="decision-badge ${getDecisionClass(getDecision(r))}">${getDecision(r) || '—'}</span></div></div></div>`).join('');
+}
+
+// VUE COMPARAISON
+function renderCompareView() {
+  const byDate = {};
+  filteredData.forEach(r => { const date = dateKey(r.timestamp); if (!byDate[date]) byDate[date] = []; byDate[date].push(r); });
+  const dates = Object.keys(byDate).sort().reverse();
+  document.getElementById('compareGrid').innerHTML = dates.slice(0, 6).map(date => { const records = byDate[date]; const temps = records.map(r => parseFloat(r.temperature)).filter(v => !isNaN(v)); const hums = records.map(r => parseFloat(r.humidite)).filter(v => !isNaN(v)); const pers = records.map(r => parseInt(r.personnes)).filter(v => !isNaN(v)); return `<div class="compare-card"><div class="compare-title">📅 ${date}</div><div class="compare-section"><div class="compare-section-title">🌡️ TEMPÉRATURE</div><div class="compare-stats-row"><div class="compare-stat"><div class="compare-stat-value temp">${temps.length ? (temps.reduce((a,b)=>a+b,0)/temps.length).toFixed(1) : '—'}°C</div><div class="compare-stat-label">Moyenne</div></div><div class="compare-stat"><div class="compare-stat-value temp">${temps.length ? Math.max(...temps).toFixed(1) : '—'}°C</div><div class="compare-stat-label">Max</div></div><div class="compare-stat"><div class="compare-stat-value temp">${temps.length ? Math.min(...temps).toFixed(1) : '—'}°C</div><div class="compare-stat-label">Min</div></div></div></div><div class="compare-section"><div class="compare-section-title">💧 HUMIDITÉ</div><div class="compare-stats-row"><div class="compare-stat"><div class="compare-stat-value hum">${hums.length ? (hums.reduce((a,b)=>a+b,0)/hums.length).toFixed(1) : '—'}%</div><div class="compare-stat-label">Moyenne</div></div><div class="compare-stat"><div class="compare-stat-value hum">${hums.length ? Math.max(...hums).toFixed(1) : '—'}%</div><div class="compare-stat-label">Max</div></div><div class="compare-stat"><div class="compare-stat-value hum">${hums.length ? Math.min(...hums).toFixed(1) : '—'}%</div><div class="compare-stat-label">Min</div></div></div></div><div class="compare-section"><div class="compare-section-title">👥 PERSONNES</div><div class="compare-stats-row"><div class="compare-stat"><div class="compare-stat-value pers">${pers.length ? (pers.reduce((a,b)=>a+b,0)/pers.length).toFixed(0) : '—'}</div><div class="compare-stat-label">Moyenne</div></div><div class="compare-stat"><div class="compare-stat-value pers">${pers.length ? Math.max(...pers) : '—'}</div><div class="compare-stat-label">Max</div></div><div class="compare-stat"><div class="compare-stat-value pers">${pers.length ? Math.min(...pers) : '—'}</div><div class="compare-stat-label">Min</div></div></div></div><div class="compare-section"><div class="compare-section-title">📊 STATISTIQUES</div><div class="compare-stats-row"><div class="compare-stat"><div class="compare-stat-value">${records.length}</div><div class="compare-stat-label">Mesures</div></div></div></div></div>`; }).join('');
+}
+
+// CHANGEMENT DE MODE
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(btn => { btn.classList.remove('active'); if (btn.getAttribute('data-mode') === mode) btn.classList.add('active'); });
+  document.querySelectorAll('.mode-view').forEach(view => view.style.display = 'none');
+  document.getElementById(`${mode}View`).style.display = 'block';
+  renderCurrentMode();
+}
+
+function renderCurrentMode() {
+  switch(currentMode) {
+    case 'graph': renderGraphView(); break;
+    case 'histogram': renderHistogramView(); break;
+    case 'donut': renderDonutView(); break;
+    case 'cards': renderCardsView(); break;
+    case 'table': renderTableView(); break;
+    case 'timeline': renderTimelineView(); break;
+    case 'compare': renderCompareView(); break;
+  }
+}
+
+function refreshAllCharts() {
+  renderCurrentMode();
+}
+
+// CHARGEMENT FIREBASE
+db.collection('historique').orderBy('timestamp', 'desc').onSnapshot(snap => {
+  allData = [];
+  snap.forEach(doc => allData.push(doc.data()));
+  filteredData = [...allData];
+  filteredData.sort((a, b) => { let da = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp); let db = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp); return da - db; });
+  
+  chartRanges = {
+    temp: { start: 0, end: Math.min(50, filteredData.length), step: 50 },
+    hum: { start: 0, end: Math.min(50, filteredData.length), step: 50 },
+    pers: { start: 0, end: Math.min(50, filteredData.length), step: 50 }
+  };
+  
+  updateStats();
+  renderCurrentMode();
+  console.log(`${allData.length} enregistrements chargés`);
+}, err => { 
+  console.error(err);
+  document.getElementById('graphView').innerHTML = '<div class="empty-chart">❌ Erreur de chargement des données</div>';
+});
+
+// Initialisation
+function init() {
+  const today = new Date();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+  document.getElementById('dateTo').value = today.toISOString().slice(0, 10);
+  document.getElementById('dateFrom').value = thirtyDaysAgo.toISOString().slice(0, 10);
+  toggleDateInputs();
+}
+
+init();
+</script>
+</body>
+</html>
